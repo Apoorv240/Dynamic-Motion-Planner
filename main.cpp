@@ -8,19 +8,19 @@
 #include "planning/rrt/rrt.hpp"
 
 int main() {
-    RRT::Generator g(RRT::Point(0,0), RRT::Point(900, 900), RRT::BoundingBox(-1000, -1000, 1000, 1000), 50, 0.5, 4000);
+    RRT::Generator g(RRT::Point(0,0), RRT::Point(900, 900), RRT::BoundingBox(-1000, -1000, 1000, 1000), 50, 0.4, 4000);
     g.iterate();
     g.iterate();
     g.iterate();
 
     int i = 0;
-    while (i < 4000) {
+    while (i < 8000) {
         g.iterate();
         i++;
     }
 
 
-    std::ofstream outFile("util/out.txt");
+    std::ofstream outFile("scripts/out.txt");
     for (const auto& node : g.allNodes) {
         auto parent = node->getParentRaw();
         if (parent != nullptr) {

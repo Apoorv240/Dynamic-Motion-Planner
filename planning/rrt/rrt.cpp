@@ -36,14 +36,13 @@ void Point::normalizeDistToPoint(const double distanceToPoint, const Point other
 }
 
 Point Generator::genRandPoint() const {
-    std::mt19937 gen(std::random_device{}());
     std::uniform_real_distribution<> bias(0, 1);
-    if (bias(gen) < goalBias) {
+    if (bias(randomNumberGenerator) < goalBias) {
         return goal;
     }
     std::uniform_real_distribution<> distX(bounds.minX, bounds.maxX);
     std::uniform_real_distribution<> distY(bounds.minY, bounds.maxY);
-    return Point(distX(gen), distY(gen));
+    return Point(distX(randomNumberGenerator), distY(randomNumberGenerator));
 }
 
 std::shared_ptr<Node> Generator::nearestNode(const Point& point) const {

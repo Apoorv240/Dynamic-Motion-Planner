@@ -6,7 +6,7 @@ plt.axis([-1000, 1000, -1000, 1000])
 ax.plot(0, 0, 'ro')
 ax.plot(900, 900, 'bo')
 
-f = open("./util/out.txt", "r")
+f = open("./scripts/out.txt", "r")
 lines = f.readlines()[1:]
 for line in lines:
     points = line.split(" ")

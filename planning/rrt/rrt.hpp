@@ -82,8 +82,10 @@ namespace RRT {
         double stepSize;
         double goalBias;
 
+        mutable std::mt19937 randomNumberGenerator;
+
         Generator(Point start, Point goal, BoundingBox bounds, double stepSize, double goalBias, int iterations)
-            :   start(start), goal(goal), stepSize(stepSize), bounds(bounds), goalBias(goalBias)
+            :   start(start), goal(goal), stepSize(stepSize), bounds(bounds), goalBias(goalBias), randomNumberGenerator(std::random_device{}())
         {
             allNodes.reserve(iterations);
             root = std::make_shared<Node>(nullptr, start);
