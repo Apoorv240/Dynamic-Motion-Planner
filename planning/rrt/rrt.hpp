@@ -29,18 +29,14 @@ namespace RRT {
     };
 
     struct Obstacle {
-        double x; // Bottom Left
-        double y;
-        double w;
-        double h;
+        std::vector<Point> polygon;
 
-        Obstacle(double x, double y, double w, double h)
-            : x(x), y(y), w(w), h(h)
+        // Clockwise winding polygon
+        Obstacle(const std::vector<Point>& polygon)
+            : polygon(polygon)
         {}
 
-        inline bool checkCollision(const Point& p) const {
-            return (p.x > x && p.x < x + w && p.y > y && p.y < y + h);
-        }
+        bool pointInObstacle(const Point& p) const;
     };
 
     struct Node {
@@ -84,8 +80,8 @@ namespace RRT {
 
         mutable std::mt19937 randomNumberGenerator;
 
-        Generator(Point start, Point goal, BoundingBox bounds, double stepSize, double goalBias, int iterations)
-            :   start(start), goal(goal), stepSize(stepSize), bounds(bounds), goalBias(goalBias), randomNumberGenerator(std::random_device{}())
+        Generator(Point start, Point goal, BoundingBox bounds, double stepSize, double goalBias, int iterations, const std::vector<Obstacle>& obstacles)
+            :   start(start), goal(goal), stepSize(stepSize), bounds(bounds), goalBias(goalBias), randomNumberGenerator(std::random_device{}()), obstacles(obstacles)
         {
             allNodes.reserve(iterations);
             root = std::make_shared<Node>(nullptr, start);
@@ -98,6 +94,7 @@ namespace RRT {
         std::shared_ptr<Node> findBestParent(const std::vector<std::shared_ptr<Node>>& nodeList, const Point& point, const std::shared_ptr<Node> nearestNode) const;
         void nodesInRadiusofPoint(std::vector<std::shared_ptr<Node>>& nodeList, double radius, const Point point) const;
         Point genRandPoint() const;
+        bool pointIsValid(const Point& p) const;
         std::shared_ptr<Node> nearestNode(const Point& point) const;
     };
 };

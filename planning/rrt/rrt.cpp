@@ -35,6 +35,27 @@ void Point::normalizeDistToPoint(const double distanceToPoint, const Point other
     y = dy / distance * distanceToPoint + otherPoint.y;
 }
 
+bool Obstacle::pointInObstacle(const Point& p) const {
+    bool inside = false;
+
+    int n = polygon.size();
+    for (int i = 0, j = n-1; i < n; j=i++) {
+        const Point& polyPointi = polygon[i];
+        const Point& polyPointj = polygon[j];
+
+        bool intersect = (
+            ((polyPointi.y > p.y) != (polyPointj.y > p.y)) &&
+            (p.x < (polyPointj.x - polyPointi.x) * (p.y - polyPointi.y) / (polyPointj.y - polyPointi.y) + polyPointi.x)
+        );
+
+        if (intersect) {
+            inside = !inside;
+        }
+    }
+
+    return inside;
+}
+
 Point Generator::genRandPoint() const {
     std::uniform_real_distribution<> bias(0, 1);
     if (bias(randomNumberGenerator) < goalBias) {
@@ -83,6 +104,15 @@ std::shared_ptr<Node> Generator::findBestParent(const std::vector<std::shared_pt
     return bestParent;
 }
 
+bool Generator::pointIsValid(const Point& p) const {
+    for (const auto& obstacle : obstacles) {
+        if (obstacle.pointInObstacle(p)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void Generator::iterate() {
     Point randPoint = genRandPoint();
 
@@ -95,7 +125,10 @@ void Generator::iterate() {
     }
     randPoint.normalizeDistToPoint(stepSize, nearestNode->point);
 
-    // TODO: CHECK COLLISION
+    // Check Collision
+    if (!pointIsValid(randPoint)) {
+        return;
+    }
 
     // Choose best parent
     double searchRadius = std::max(stepSize * 2, 

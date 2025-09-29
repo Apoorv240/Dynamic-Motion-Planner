@@ -8,7 +8,17 @@
 #include "planning/rrt/rrt.hpp"
 
 int main() {
-    RRT::Generator g(RRT::Point(0,0), RRT::Point(900, 900), RRT::BoundingBox(-1000, -1000, 1000, 1000), 50, 0.4, 4000);
+    RRT::Generator g(
+        RRT::Point(0,0), 
+        RRT::Point(900, 900), 
+        RRT::BoundingBox(-1000, -1000, 1000, 1000), 
+        50, 0.4, 4000,
+        std::vector<RRT::Obstacle> {
+            RRT::Obstacle(
+                std::vector<RRT::Point>{RRT::Point(300, 0), RRT::Point(500, 0), RRT::Point(500, 500), RRT::Point(300, 500)}
+            )
+        }
+    );
     g.iterate();
     g.iterate();
     g.iterate();
