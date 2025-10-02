@@ -9,35 +9,49 @@
 
 int main() {
     RRT::Generator g(
-        RRT::Point(0,0), 
-        RRT::Point(900, 900), 
-        RRT::BoundingBox(-1000, -1000, 1000, 1000), 
-        50, 0.4, 4000,
+        RRT::Point(-170, 0), 
+        RRT::Point(170, 0), 
+        RRT::BoundingBox(-182.88, -182.88, 182.88, 182.88),
+        10, 20, 0.4, 10, 16000,
         std::vector<RRT::Obstacle> {
-            RRT::Obstacle(
-                std::vector<RRT::Point>{RRT::Point(300, 0), RRT::Point(500, 0), RRT::Point(500, 500), RRT::Point(300, 500)}
-            )
+            RRT::Obstacle::fromRectBottomLeft(44*2.54, -30*2.54, 10*2.54, 50*2.54),
+            RRT::Obstacle::fromRectBottomLeft(-15 * 2.54, -15 * 2.54, 30 * 2.54, 30 * 2.54),
+            RRT::Obstacle::fromRectBottomLeft(-51 * 2.54, -27 * 2.54, 10 * 2.54, 50 * 2.54),
         }
     );
-    g.iterate();
-    g.iterate();
-    g.iterate();
 
     int i = 0;
-    while (i < 8000) {
+    while (i < 16000) {
         g.iterate();
         i++;
     }
 
 
-    std::ofstream outFile("scripts/out.txt");
+    std::ofstream outFile("scripts\\out.txt");
+    for (auto obstacle : g.obstacles) {
+        outFile << obstacle.polygon[0].x << " " << obstacle.polygon[0].y << std::endl;
+        outFile << obstacle.polygon[1].x << " " << obstacle.polygon[1].y << std::endl;
+        outFile << obstacle.polygon[2].x << " " << obstacle.polygon[2].y << std::endl;
+        outFile << obstacle.polygon[3].x << " " << obstacle.polygon[3].y << std::endl;
+    }
+
     for (const auto& node : g.allNodes) {
+        std::cout << "a";
         auto parent = node->getParentRaw();
         if (parent != nullptr) {
             outFile << parent->point.x << " " << parent->point.y << " ";
         }
         outFile << node->point.x << " " << node->point.y << std::endl; 
     }
+    /*
+    auto node = g.optimalNodeNearGoal().get();
+    while (node->getParentRaw() != nullptr) {
+        auto parent = node->getParentRaw();
+        outFile << parent->point.x << " " << parent->point.y << " ";
+        outFile << node->point.x << " " << node->point.y << std::endl;
+
+        node = node->getParentRaw();
+    }*/
 
     outFile.close();
 

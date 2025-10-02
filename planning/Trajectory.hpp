@@ -18,7 +18,7 @@ public:
         : previous(nullptr), next(nullptr)
     {}
 
-    TrajectorySegment(const Pose2d startPose, const Pose2d endPose, const TrajectoryType type) 
+    TrajectorySegment(const Pose2d startPose, const Pose2d endPose, const TrajectoryType type)
         : _startPose(startPose), _endPose(endPose), previous(nullptr), next(nullptr)
     {}
 

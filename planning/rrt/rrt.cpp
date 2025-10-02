@@ -146,9 +146,10 @@ void Generator::iterate() {
 
     // Rewire nearby nodes
     std::vector<std::shared_ptr<Node>> rewireCandidates;
-    nodesInRadiusofPoint(rewireCandidates, stepSize*3, newNode->point);
+    nodesInRadiusofPoint(rewireCandidates, rewireRadius, newNode->point);
     for (auto &node : rewireCandidates) {
         if (node == newNode) continue;
+        
         if (node->cost > newNode->cost + newNode->point.distToPoint(node->point)) {
             auto oldParent = node->parent.lock();
             if (oldParent){
@@ -163,4 +164,23 @@ void Generator::iterate() {
             
         }
     }
+}
+
+std::shared_ptr<Node> Generator::optimalNodeNearGoal() const {
+    std::vector<std::shared_ptr<Node>> goalCandidates;
+    nodesInRadiusofPoint(goalCandidates, goalRadius, goal);
+
+    if (goalCandidates.size() == 0) {
+        return nullptr;
+    }
+
+    std::shared_ptr<Node> bestCandidate = goalCandidates[0];
+
+    for (auto& node : goalCandidates) {
+        if (node->cost < bestCandidate->cost) {
+            bestCandidate = node;
+        }
+    }
+
+    return bestCandidate;
 }

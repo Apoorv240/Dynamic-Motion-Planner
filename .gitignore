@@ -1,0 +1,13 @@
+*.vsidx
+/.vs
+/.vscode
+/build
+main.obj
+main.pdb
+main.ilk
+main.exe
+RRT.obj
+Trajectory.obj
+vc140.pdb
+CppProperties.json
+a.out

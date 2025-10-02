@@ -36,6 +36,28 @@ namespace RRT {
             : polygon(polygon)
         {}
 
+        static Obstacle fromRectVertices(double leftX, double bottomY, double rightX, double topY) {
+            return Obstacle(
+                std::vector<Point>{
+                    Point(leftX, bottomY),
+                    Point(rightX, bottomY),
+                    Point(rightX, topY),
+                    Point(leftX, topY)
+                }
+            );
+        }
+
+        static Obstacle fromRectBottomLeft(double blX, double blY, double width, double height) {
+            return Obstacle(
+                std::vector<Point>{
+                    Point(blX, blY),
+                    Point(blX + width, blY),
+                    Point(blX + width, blY + height),
+                    Point(blX, blY + height)
+                }
+            );
+        }
+
         bool pointInObstacle(const Point& p) const;
     };
 
@@ -77,11 +99,13 @@ namespace RRT {
 
         double stepSize;
         double goalBias;
+        double goalRadius;
+        double rewireRadius;
 
         mutable std::mt19937 randomNumberGenerator;
 
-        Generator(Point start, Point goal, BoundingBox bounds, double stepSize, double goalBias, int iterations, const std::vector<Obstacle>& obstacles)
-            :   start(start), goal(goal), stepSize(stepSize), bounds(bounds), goalBias(goalBias), randomNumberGenerator(std::random_device{}()), obstacles(obstacles)
+        Generator(Point start, Point goal, BoundingBox bounds, double stepSize, double rewireRadius, double goalBias, double goalRadius, int iterations, const std::vector<Obstacle>& obstacles)
+            :   start(start), goal(goal), stepSize(stepSize), rewireRadius(rewireRadius), bounds(bounds), goalBias(goalBias), goalRadius(goalRadius), randomNumberGenerator(std::random_device{}()), obstacles(obstacles)
         {
             allNodes.reserve(iterations);
             root = std::make_shared<Node>(nullptr, start);
@@ -89,6 +113,7 @@ namespace RRT {
         }
 
         void iterate();
+        std::shared_ptr<Node> optimalNodeNearGoal() const;
 
         private:
         std::shared_ptr<Node> findBestParent(const std::vector<std::shared_ptr<Node>>& nodeList, const Point& point, const std::shared_ptr<Node> nearestNode) const;
