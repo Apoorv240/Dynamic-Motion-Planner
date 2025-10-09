@@ -5,78 +5,11 @@
 #include <vector>
 #include <random>
 
+#include "point.hpp"
+#include "obstacle.hpp"
+#include "node.hpp"
+
 namespace RRT {
-    struct Point {
-        double x;
-        double y;
-
-        Point(double x, double y) 
-            : x(x), y(y) 
-        {}
-
-        inline double distToPoint(const Point& p) const {
-            return std::sqrt((p.x - this->x) * (p.x - this->x) + (p.y - this->y) * (p.y - this->y));
-        }
-
-        bool operator==(const Point &p) const {
-            return (
-                std::abs(x - p.x) < 1e-9 &&
-                std::abs(y - p.y) < 1e-9
-            );
-        }
-        
-        void normalizeDistToPoint(const double length, const Point otherPoint);
-    };
-
-    struct Obstacle {
-        std::vector<Point> polygon;
-
-        // Clockwise winding polygon
-        Obstacle(const std::vector<Point>& polygon)
-            : polygon(polygon)
-        {}
-
-        static Obstacle fromRectVertices(double leftX, double bottomY, double rightX, double topY) {
-            return Obstacle(
-                std::vector<Point>{
-                    Point(leftX, bottomY),
-                    Point(rightX, bottomY),
-                    Point(rightX, topY),
-                    Point(leftX, topY)
-                }
-            );
-        }
-
-        static Obstacle fromRectBottomLeft(double blX, double blY, double width, double height) {
-            return Obstacle(
-                std::vector<Point>{
-                    Point(blX, blY),
-                    Point(blX + width, blY),
-                    Point(blX + width, blY + height),
-                    Point(blX, blY + height)
-                }
-            );
-        }
-
-        bool pointInObstacle(const Point& p) const;
-    };
-
-    struct Node {
-        Node* parent;
-        std::vector<std::unique_ptr<Node>> children;
-        Point point;
-        double cost;
-
-        Node(Node* parent, Point point)
-            : parent(parent), children(), point(point), cost(0)
-        {}
-
-        Node* getParentRaw() const;
-
-        double calculateCost();
-        void propagateCost();
-    };
-
     struct BoundingBox {
         double minX;
         double minY;

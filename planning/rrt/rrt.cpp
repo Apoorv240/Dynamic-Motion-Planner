@@ -3,51 +3,6 @@
 
 using namespace RRT;
 
-double Node::calculateCost() {
-    if (parent == nullptr) {
-        return 0;
-    }
-    double newCost = parent->cost + point.distToPoint(parent->point);
-    cost = newCost;
-    return newCost;
-}
-
-void Node::propagateCost() {
-    for (auto &child : children) {
-        child->calculateCost();
-        child->propagateCost();
-    }
-}
-
-void Point::normalizeDistToPoint(const double distanceToPoint, const Point otherPoint) {
-    double dx = x - otherPoint.x;
-    double dy = y - otherPoint.y;
-    double distance = std::sqrt(dx*dx + dy*dy);
-    x = dx / distance * distanceToPoint + otherPoint.x;
-    y = dy / distance * distanceToPoint + otherPoint.y;
-}
-
-bool Obstacle::pointInObstacle(const Point& p) const {
-    bool inside = false;
-
-    int n = polygon.size();
-    for (int i = 0, j = n-1; i < n; j=i++) {
-        const Point& polyPointi = polygon[i];
-        const Point& polyPointj = polygon[j];
-
-        bool intersect = (
-            ((polyPointi.y > p.y) != (polyPointj.y > p.y)) &&
-            (p.x < (polyPointj.x - polyPointi.x) * (p.y - polyPointi.y) / (polyPointj.y - polyPointi.y) + polyPointi.x)
-        );
-
-        if (intersect) {
-            inside = !inside;
-        }
-    }
-
-    return inside;
-}
-
 Point Generator::genRandPoint() const {
     std::uniform_real_distribution<> bias(0, 1);
     if (bias(randomNumberGenerator) < goalBias) {
