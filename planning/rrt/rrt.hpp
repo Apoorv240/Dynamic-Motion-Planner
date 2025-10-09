@@ -62,12 +62,12 @@ namespace RRT {
     };
 
     struct Node {
-        std::weak_ptr<Node> parent;
-        std::vector<std::shared_ptr<Node>> children;
+        Node* parent;
+        std::vector<std::unique_ptr<Node>> children;
         Point point;
         double cost;
 
-        Node(std::shared_ptr<Node> parent, Point point)
+        Node(Node* parent, Point point)
             : parent(parent), children(), point(point), cost(0)
         {}
 
@@ -93,8 +93,8 @@ namespace RRT {
         Point start;
         Point goal;
         BoundingBox bounds;
-        std::shared_ptr<Node> root;
-        std::vector<std::shared_ptr<Node>> allNodes;
+        std::unique_ptr<Node> root;
+        std::vector<Node*> allNodes;
         std::vector<Obstacle> obstacles;
 
         double stepSize;
@@ -108,18 +108,18 @@ namespace RRT {
             :   start(start), goal(goal), stepSize(stepSize), rewireRadius(rewireRadius), bounds(bounds), goalBias(goalBias), goalRadius(goalRadius), randomNumberGenerator(std::random_device{}()), obstacles(obstacles)
         {
             allNodes.reserve(iterations);
-            root = std::make_shared<Node>(nullptr, start);
-            allNodes.push_back(root);
+            root = std::make_unique<Node>(nullptr, start);
+            allNodes.push_back(root.get());
         }
 
         void iterate();
-        std::shared_ptr<Node> optimalNodeNearGoal() const;
+        Node* optimalNodeNearGoal() const;
 
         private:
-        std::shared_ptr<Node> findBestParent(const std::vector<std::shared_ptr<Node>>& nodeList, const Point& point, const std::shared_ptr<Node> nearestNode) const;
-        void nodesInRadiusofPoint(std::vector<std::shared_ptr<Node>>& nodeList, double radius, const Point point) const;
+        Node* findBestParent(const std::vector<Node*>& nodeList, const Point& point, Node* nearestNode) const;
+        void nodesInRadiusofPoint(std::vector<Node*>& nodeList, double radius, const Point& point) const;
         Point genRandPoint() const;
         bool pointIsValid(const Point& p) const;
-        std::shared_ptr<Node> nearestNode(const Point& point) const;
+        Node* nearestNode(const Point& point) const;
     };
 };

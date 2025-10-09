@@ -3,19 +3,11 @@
 
 using namespace RRT;
 
-Node* Node::getParentRaw() const {
-    if (auto sp = parent.lock()) {
-        return sp.get();
-    }
-    return nullptr;
-}
-
 double Node::calculateCost() {
-    Node* sparent = getParentRaw();
-    if (sparent == nullptr) {
+    if (parent == nullptr) {
         return 0;
     }
-    double newCost = sparent->cost + point.distToPoint(sparent->point);
+    double newCost = parent->cost + point.distToPoint(parent->point);
     cost = newCost;
     return newCost;
 }
@@ -66,8 +58,8 @@ Point Generator::genRandPoint() const {
     return Point(distX(randomNumberGenerator), distY(randomNumberGenerator));
 }
 
-std::shared_ptr<Node> Generator::nearestNode(const Point& point) const {
-    std::shared_ptr<Node> nearestNode = allNodes[0];
+Node* Generator::nearestNode(const Point& point) const {
+    Node* nearestNode = allNodes[0];
     double lowestDist = nearestNode->point.distToPoint(point);
 
     for (const auto& node : allNodes) {
@@ -81,7 +73,7 @@ std::shared_ptr<Node> Generator::nearestNode(const Point& point) const {
     return nearestNode;
 }
 
-void Generator::nodesInRadiusofPoint(std::vector<std::shared_ptr<Node>>& nodeList, double radius, const Point point) const {
+void Generator::nodesInRadiusofPoint(std::vector<Node*>& nodeList, double radius, const Point& point) const {
     for (const auto& node : allNodes) {
         if (point.distToPoint(node->point) <= radius) {
             nodeList.push_back(node);
@@ -89,8 +81,8 @@ void Generator::nodesInRadiusofPoint(std::vector<std::shared_ptr<Node>>& nodeLis
     }
 }
 
-std::shared_ptr<Node> Generator::findBestParent(const std::vector<std::shared_ptr<Node>>& nodeList, const Point& point, const std::shared_ptr<Node> nearestNode) const {
-    std::shared_ptr<Node> bestParent = nearestNode;
+Node* Generator::findBestParent(const std::vector<Node*>& nodeList, const Point& point, Node* nearestNode) const {
+    Node* bestParent = nearestNode;
     double bestCost = bestParent->cost + point.distToPoint(bestParent->point);
 
     for (const auto& node : nodeList) {
@@ -117,7 +109,7 @@ void Generator::iterate() {
     Point randPoint = genRandPoint();
 
     // Nearest Node to Point
-    std::shared_ptr<Node> nearestNode = this->nearestNode(randPoint);
+    Node* nearestNode = this->nearestNode(randPoint);
 
     // Normalize the point to the node
     if (randPoint == nearestNode->point) {
@@ -133,31 +125,34 @@ void Generator::iterate() {
     // Choose best parent
     double searchRadius = std::max(stepSize * 2, 
         stepSize * std::sqrt(std::log(allNodes.size()) / allNodes.size()));
-    std::vector<std::shared_ptr<Node>> nearbyNodes;
+    std::vector<Node*> nearbyNodes;
     nodesInRadiusofPoint(nearbyNodes, searchRadius, randPoint);
-    std::shared_ptr<Node> bestParent = findBestParent(nearbyNodes, randPoint, nearestNode);
+    Node* bestParent = findBestParent(nearbyNodes, randPoint, nearestNode);
 
     // Wire new node to the best parent
-    auto newNode = std::make_shared<Node>(bestParent, randPoint);
-    bestParent->children.push_back(newNode);
+    std::unique_ptr<Node> newNodePtr = std::make_unique<Node>(bestParent, randPoint);
+    Node* newNode = newNodePtr.get();
+    bestParent->children.emplace_back(std::move(newNodePtr));
     newNode->parent = bestParent;
     newNode->calculateCost();
     allNodes.push_back(newNode);
 
     // Rewire nearby nodes
-    std::vector<std::shared_ptr<Node>> rewireCandidates;
+    std::vector<Node*> rewireCandidates;
     nodesInRadiusofPoint(rewireCandidates, rewireRadius, newNode->point);
     for (auto &node : rewireCandidates) {
-        if (node == newNode) continue;
+        if (node->point == newNode->point) continue;
         
         if (node->cost > newNode->cost + newNode->point.distToPoint(node->point)) {
-            auto oldParent = node->parent.lock();
-            if (oldParent){
+            if (node->parent){
+                auto nodePtr = std::find_if(node->parent->children.begin(), node->parent->children.end(),
+                    [node](const std::unique_ptr<Node>& ptr) {
+                        return ptr.get() == node;
+                });
+
+                newNode->children.push_back(std::move(*nodePtr));
+                node->parent->children.erase(nodePtr);
                 node->parent = newNode;
-                newNode->children.push_back(node);
-                
-                auto& siblings = oldParent->children;
-                siblings.erase(std::remove(siblings.begin(), siblings.end(), node), siblings.end());
                 node->calculateCost();
                 node->propagateCost();
             }
@@ -166,15 +161,15 @@ void Generator::iterate() {
     }
 }
 
-std::shared_ptr<Node> Generator::optimalNodeNearGoal() const {
-    std::vector<std::shared_ptr<Node>> goalCandidates;
+Node* Generator::optimalNodeNearGoal() const {
+    std::vector<Node*> goalCandidates;
     nodesInRadiusofPoint(goalCandidates, goalRadius, goal);
 
     if (goalCandidates.size() == 0) {
         return nullptr;
     }
 
-    std::shared_ptr<Node> bestCandidate = goalCandidates[0];
+    Node* bestCandidate = goalCandidates[0];
 
     for (auto& node : goalCandidates) {
         if (node->cost < bestCandidate->cost) {

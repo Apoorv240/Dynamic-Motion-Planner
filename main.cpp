@@ -37,7 +37,7 @@ int main() {
 
     for (const auto& node : g.allNodes) {
         std::cout << "a";
-        auto parent = node->getParentRaw();
+        auto parent = node->parent;
         if (parent != nullptr) {
             outFile << parent->point.x << " " << parent->point.y << " ";
         }
