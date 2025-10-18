@@ -37,8 +37,6 @@ namespace RRT {
         double goalRadius;
         double rewireRadius;
 
-        int i;
-
         mutable std::mt19937 randomNumberGenerator;
 
         Generator(Point start, Point goal, BoundingBox bounds, double stepSize, double rewireRadius, double goalBias, double goalRadius, int iterations, const std::vector<Obstacle>& obstacles)
@@ -59,8 +57,6 @@ namespace RRT {
 
             //allNodes.push_back(root.get());
             nodeManager.addNode(root.get());
-
-            i = 0;
         }
 
         void iterate();

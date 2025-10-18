@@ -14,28 +14,10 @@ Point Generator::genRandPoint() const {
 }
 
 Node* Generator::nearestNode(const Point& point) const {
-    // Node* nearestNode = nodeManager.nodes[0];
-    // double lowestDist = nearestNode->point.distToPoint(point);
-
-    // for (const auto& node : nodeManager.nodes) {
-    //     double dist = node->point.distToPoint(point);
-    //     if (dist < lowestDist) {
-    //         nearestNode = node;
-    //         lowestDist = dist;
-    //     }
-    // }
-
-    // return nearestNode;
     return nodeManager.nearestNeighbor(point);
 }
 
 void Generator::nodesInRadiusofPoint(std::vector<Node*>& nodeList, double radius, const Point& point) const {
-    // for (const auto& node : nodeManager.nodes) {
-    //     if (point.distToPoint(node->point) <= radius) {
-    //         nodeList.push_back(node);
-    //     }
-    // }
-
     nodeManager.radiusSearch(nodeList, radius, point);
 }
 
@@ -64,8 +46,6 @@ bool Generator::pointIsValid(const Point& p) const {
 }
 
 void Generator::iterate() {
-    i += 1;
-
     Point randPoint = genRandPoint();
 
     // Nearest Node to Point
@@ -106,7 +86,7 @@ void Generator::iterate() {
         if (node->point == newNode->point) continue;
         
         if (node->cost > newNode->cost + newNode->point.distToPoint(node->point)) {
-            if (node->parent){
+            if (node->parent) {
                 auto nodePtr = std::find_if(node->parent->children.begin(), node->parent->children.end(),
                     [node](const std::unique_ptr<Node>& ptr) {
                         return ptr.get() == node;
