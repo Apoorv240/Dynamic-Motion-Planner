@@ -3,30 +3,30 @@
 
 using namespace RRT;
 
-Point Generator::genRandPoint() const {
+Vec2d Generator::genRandPoint() const {
     std::uniform_real_distribution<> bias(0, 1);
     if (bias(randomNumberGenerator) < goalBias) {
         return goal;
     }
     std::uniform_real_distribution<> distX(bounds.minX, bounds.maxX);
     std::uniform_real_distribution<> distY(bounds.minY, bounds.maxY);
-    return Point(distX(randomNumberGenerator), distY(randomNumberGenerator));
+    return Vec2d(distX(randomNumberGenerator), distY(randomNumberGenerator));
 }
 
-Node* Generator::nearestNode(const Point& point) const {
+Node* Generator::nearestNode(const Vec2d& point) const {
     return nodeManager.nearestNeighbor(point);
 }
 
-void Generator::nodesInRadiusofPoint(std::vector<Node*>& nodeList, double radius, const Point& point) const {
+void Generator::nodesInRadiusofPoint(std::vector<Node*>& nodeList, double radius, const Vec2d& point) const {
     nodeManager.radiusSearch(nodeList, radius, point);
 }
 
-Node* Generator::findBestParent(const std::vector<Node*>& nodeList, const Point& point, Node* nearestNode) const {
+Node* Generator::findBestParent(const std::vector<Node*>& nodeList, const Vec2d& point, Node* nearestNode) const {
     Node* bestParent = nearestNode;
-    double bestCost = bestParent->cost + point.distToPoint(bestParent->point);
+    double bestCost = bestParent->cost + (point - bestParent->point).magnitude();
 
     for (const auto& node : nodeList) {
-        double cost = node->cost + point.distToPoint(node->point);
+        double cost = node->cost + (point - node->point).magnitude();
         if (cost < bestCost) {
             bestParent = node;
             bestCost = cost;
@@ -36,7 +36,7 @@ Node* Generator::findBestParent(const std::vector<Node*>& nodeList, const Point&
     return bestParent;
 }
 
-bool Generator::pointIsValid(const Point& p) const {
+bool Generator::pointIsValid(const Vec2d& p) const {
     for (const auto& obstacle : obstacles) {
         if (obstacle.pointInObstacle(p)) {
             return false;
@@ -46,7 +46,7 @@ bool Generator::pointIsValid(const Point& p) const {
 }
 
 void Generator::iterate() {
-    Point randPoint = genRandPoint();
+    Vec2d randPoint = genRandPoint();
 
     // Nearest Node to Point
     Node* nearestNode = this->nearestNode(randPoint);
@@ -55,7 +55,7 @@ void Generator::iterate() {
     if (randPoint == nearestNode->point) {
         return;
     }
-    randPoint.normalizeDistToPoint(stepSize, nearestNode->point);
+    randPoint = randPoint.steerToward(nearestNode->point, stepSize);
 
     // Check Collision
     if (!pointIsValid(randPoint)) {
@@ -85,7 +85,7 @@ void Generator::iterate() {
     for (auto &node : rewireCandidates) {
         if (node->point == newNode->point) continue;
         
-        if (node->cost > newNode->cost + newNode->point.distToPoint(node->point)) {
+        if (node->cost > newNode->cost + (newNode->point - node->point).magnitude()) {
             if (node->parent) {
                 auto nodePtr = std::find_if(node->parent->children.begin(), node->parent->children.end(),
                     [node](const std::unique_ptr<Node>& ptr) {

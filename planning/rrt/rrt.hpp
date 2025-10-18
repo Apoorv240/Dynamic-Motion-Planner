@@ -10,6 +10,8 @@
 #include "node.hpp"
 #include "nodeManager.hpp"
 
+#include "../../math/Vec2d.hpp"
+
 namespace RRT {
     struct BoundingBox {
         double minX;
@@ -24,8 +26,8 @@ namespace RRT {
 
     class Generator {
         public:
-        Point start;
-        Point goal;
+        Vec2d start;
+        Vec2d goal;
         BoundingBox bounds;
         std::unique_ptr<Node> root;
         //std::vector<Node*> allNodes;
@@ -39,7 +41,7 @@ namespace RRT {
 
         mutable std::mt19937 randomNumberGenerator;
 
-        Generator(Point start, Point goal, BoundingBox bounds, double stepSize, double rewireRadius, double goalBias, double goalRadius, int iterations, const std::vector<Obstacle>& obstacles)
+        Generator(Vec2d start, Vec2d goal, BoundingBox bounds, double stepSize, double rewireRadius, double goalBias, double goalRadius, int iterations, const std::vector<Obstacle>& obstacles)
             :   start(start), 
                 goal(goal), 
                 stepSize(stepSize), 
@@ -63,10 +65,10 @@ namespace RRT {
         Node* optimalNodeNearGoal() const;
 
         private:
-        Node* findBestParent(const std::vector<Node*>& nodeList, const Point& point, Node* nearestNode) const;
-        void nodesInRadiusofPoint(std::vector<Node*>& nodeList, double radius, const Point& point) const;
-        Point genRandPoint() const;
-        bool pointIsValid(const Point& p) const;
-        Node* nearestNode(const Point& point) const;
+        Node* findBestParent(const std::vector<Node*>& nodeList, const Vec2d& point, Node* nearestNode) const;
+        void nodesInRadiusofPoint(std::vector<Node*>& nodeList, double radius, const Vec2d& point) const;
+        Vec2d genRandPoint() const;
+        bool pointIsValid(const Vec2d& p) const;
+        Node* nearestNode(const Vec2d& point) const;
     };
 };

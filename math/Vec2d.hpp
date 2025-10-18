@@ -43,5 +43,31 @@ public:
     void setY(const double y) {
         y_ = y;
         dirty_ = true;
+    } 
+    
+    Vec2d normalized() const {
+        double mag  = magnitude();
+        return Vec2d(x_/mag, y_/mag);
+    }
+
+    Vec2d steerToward(const Vec2d& origin, double distance) const {
+        Vec2d u = (*this - origin).normalized();
+        return origin + u * distance;
+    }
+
+    bool operator==(const Vec2d& other) const {
+        return (x() == other.x() && y() == other.y());
+    }
+
+    Vec2d operator+(const Vec2d& other) const {
+        return Vec2d(x() + other.x(), y() + other.y());
+    }
+
+    Vec2d operator-(const Vec2d& other) const {
+        return Vec2d(x() - other.x(), y() - other.y());
+    }
+
+    Vec2d operator*(const double scalar) const {
+        return Vec2d(x() * scalar, y() * scalar);
     }
 };

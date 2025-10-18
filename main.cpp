@@ -10,10 +10,10 @@
 
 int main() {
     auto startTime = std::chrono::high_resolution_clock::now();    
-    RRT::Point start = RRT::Point(-170, 0);
+    Vec2d start = Vec2d(-170, 0);
     RRT::Generator g(
         start, 
-        RRT::Point(170, 0), 
+        Vec2d(170, 0), 
         RRT::BoundingBox(-182.88, -182.88, 182.88, 182.88),
         10, 20, 0.4, 10, 16000,
         std::vector<RRT::Obstacle> {
@@ -33,10 +33,10 @@ int main() {
 
     std::ofstream outFile("scripts\\out.txt");
     for (auto obstacle : g.obstacles) {
-        outFile << obstacle.polygon[0].x << " " << obstacle.polygon[0].y << std::endl;
-        outFile << obstacle.polygon[1].x << " " << obstacle.polygon[1].y << std::endl;
-        outFile << obstacle.polygon[2].x << " " << obstacle.polygon[2].y << std::endl;
-        outFile << obstacle.polygon[3].x << " " << obstacle.polygon[3].y << std::endl;
+        outFile << obstacle.polygon[0].x() << " " << obstacle.polygon[0].y() << std::endl;
+        outFile << obstacle.polygon[1].x() << " " << obstacle.polygon[1].y() << std::endl;
+        outFile << obstacle.polygon[2].x() << " " << obstacle.polygon[2].y() << std::endl;
+        outFile << obstacle.polygon[3].x() << " " << obstacle.polygon[3].y() << std::endl;
     }
 
     // for (const auto& node : g.allNodes) {
@@ -51,8 +51,8 @@ int main() {
     auto node = g.optimalNodeNearGoal();
     while (node->parent != nullptr) {
         auto parent = node->parent;
-        outFile << parent->point.x << " " << parent->point.y << " ";
-        outFile << node->point.x << " " << node->point.y << std::endl;
+        outFile << parent->point.x() << " " << parent->point.y() << " ";
+        outFile << node->point.x() << " " << node->point.y() << std::endl;
 
         node = node->parent;
     }

@@ -15,9 +15,9 @@ namespace RRT {
 
         inline double kdtree_get_pt(const size_t idx, const size_t dim) const {
             if (dim == 0)
-                return nodes[idx]->point.x;
+                return nodes[idx]->point.x();
             else
-                return nodes[idx]->point.y;
+                return nodes[idx]->point.y();
         }
 
         template <class BBOX>
@@ -51,10 +51,10 @@ namespace RRT {
             size++;
         }
 
-        Node* nearestNeighbor(const Point& point) const {
+        Node* nearestNeighbor(const Vec2d& point) const {
             size_t retIndex;
             double retDistanceSquared;
-            double query_point[2] = {point.x, point.y};
+            double query_point[2] = {point.x(), point.y()};
 
             nanoflann::KNNResultSet<double> resultSet(1);
             resultSet.init(&retIndex, &retDistanceSquared);
@@ -63,10 +63,10 @@ namespace RRT {
             return nodes[retIndex];
         }
 
-        void radiusSearch(std::vector<Node*>& nodeList, double radius, const Point& point) const {
+        void radiusSearch(std::vector<Node*>& nodeList, double radius, const Vec2d& point) const {
             const double radiusSqr = radius * radius;
             std::vector<nanoflann::ResultItem<size_t, double>> retIndicesDists;
-            double query_point[2] = {point.x, point.y};
+            double query_point[2] = {point.x(), point.y()};
 
             nanoflann::RadiusResultSet<double> resultSet(radiusSqr, retIndicesDists);
             index.findNeighbors(resultSet, query_point);
