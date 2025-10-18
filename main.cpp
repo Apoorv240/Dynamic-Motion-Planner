@@ -2,14 +2,17 @@
 #include <fstream>
 #include <memory>
 #include <string>
+#include <chrono>
 
 #include "math/QuinticSpline.hpp"
 #include "planning/Trajectory.hpp"
 #include "planning/rrt/rrt.hpp"
 
 int main() {
+    auto startTime = std::chrono::high_resolution_clock::now();    
+    RRT::Point start = RRT::Point(-170, 0);
     RRT::Generator g(
-        RRT::Point(-170, 0), 
+        start, 
         RRT::Point(170, 0), 
         RRT::BoundingBox(-182.88, -182.88, 182.88, 182.88),
         10, 20, 0.4, 10, 16000,
@@ -21,11 +24,12 @@ int main() {
     );
 
     int i = 0;
-    while (i < 16000) {
+    while (i < 2000) {
         g.iterate();
         i++;
     }
 
+    auto endTime = std::chrono::high_resolution_clock::now();
 
     std::ofstream outFile("scripts\\out.txt");
     for (auto obstacle : g.obstacles) {
@@ -35,25 +39,28 @@ int main() {
         outFile << obstacle.polygon[3].x << " " << obstacle.polygon[3].y << std::endl;
     }
 
-    for (const auto& node : g.allNodes) {
-        std::cout << "a";
+    // for (const auto& node : g.allNodes) {
+    //     std::cout << "a";
+    //     auto parent = node->parent;
+    //     if (parent != nullptr) {
+    //         outFile << parent->point.x << " " << parent->point.y << " ";
+    //     }
+    //     outFile << node->point.x << " " << node->point.y << std::endl; 
+    // }
+    
+    auto node = g.optimalNodeNearGoal();
+    while (node->parent != nullptr) {
         auto parent = node->parent;
-        if (parent != nullptr) {
-            outFile << parent->point.x << " " << parent->point.y << " ";
-        }
-        outFile << node->point.x << " " << node->point.y << std::endl; 
-    }
-    /*
-    auto node = g.optimalNodeNearGoal().get();
-    while (node->getParentRaw() != nullptr) {
-        auto parent = node->getParentRaw();
         outFile << parent->point.x << " " << parent->point.y << " ";
         outFile << node->point.x << " " << node->point.y << std::endl;
 
-        node = node->getParentRaw();
-    }*/
+        node = node->parent;
+    }
 
     outFile.close();
+
+    std::chrono::duration<double, std::milli> duration = endTime - startTime;
+    std::cout << "Iterated for: " << duration.count() << " milliseconds" << std::endl;
 
     // QuinticSegment qp(0, 10, 0, 10, 10, 0);
 

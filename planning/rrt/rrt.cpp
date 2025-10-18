@@ -14,26 +14,29 @@ Point Generator::genRandPoint() const {
 }
 
 Node* Generator::nearestNode(const Point& point) const {
-    Node* nearestNode = allNodes[0];
-    double lowestDist = nearestNode->point.distToPoint(point);
+    // Node* nearestNode = nodeManager.nodes[0];
+    // double lowestDist = nearestNode->point.distToPoint(point);
 
-    for (const auto& node : allNodes) {
-        double dist = node->point.distToPoint(point);
-        if (dist < lowestDist) {
-            nearestNode = node;
-            lowestDist = dist;
-        }
-    }
+    // for (const auto& node : nodeManager.nodes) {
+    //     double dist = node->point.distToPoint(point);
+    //     if (dist < lowestDist) {
+    //         nearestNode = node;
+    //         lowestDist = dist;
+    //     }
+    // }
 
-    return nearestNode;
+    // return nearestNode;
+    return nodeManager.nearestNeighbor(point);
 }
 
 void Generator::nodesInRadiusofPoint(std::vector<Node*>& nodeList, double radius, const Point& point) const {
-    for (const auto& node : allNodes) {
-        if (point.distToPoint(node->point) <= radius) {
-            nodeList.push_back(node);
-        }
-    }
+    // for (const auto& node : nodeManager.nodes) {
+    //     if (point.distToPoint(node->point) <= radius) {
+    //         nodeList.push_back(node);
+    //     }
+    // }
+
+    nodeManager.radiusSearch(nodeList, radius, point);
 }
 
 Node* Generator::findBestParent(const std::vector<Node*>& nodeList, const Point& point, Node* nearestNode) const {
@@ -61,6 +64,8 @@ bool Generator::pointIsValid(const Point& p) const {
 }
 
 void Generator::iterate() {
+    i += 1;
+
     Point randPoint = genRandPoint();
 
     // Nearest Node to Point
@@ -79,9 +84,10 @@ void Generator::iterate() {
 
     // Choose best parent
     double searchRadius = std::max(stepSize * 2, 
-        stepSize * std::sqrt(std::log(allNodes.size()) / allNodes.size()));
+        stepSize * std::sqrt(std::log(nodeManager.size) / nodeManager.size));
     std::vector<Node*> nearbyNodes;
     nodesInRadiusofPoint(nearbyNodes, searchRadius, randPoint);
+
     Node* bestParent = findBestParent(nearbyNodes, randPoint, nearestNode);
 
     // Wire new node to the best parent
@@ -90,7 +96,8 @@ void Generator::iterate() {
     bestParent->children.emplace_back(std::move(newNodePtr));
     newNode->parent = bestParent;
     newNode->calculateCost();
-    allNodes.push_back(newNode);
+
+    nodeManager.addNode(newNode);
 
     // Rewire nearby nodes
     std::vector<Node*> rewireCandidates;

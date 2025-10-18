@@ -8,6 +8,7 @@
 #include "point.hpp"
 #include "obstacle.hpp"
 #include "node.hpp"
+#include "nodeManager.hpp"
 
 namespace RRT {
     struct BoundingBox {
@@ -27,22 +28,39 @@ namespace RRT {
         Point goal;
         BoundingBox bounds;
         std::unique_ptr<Node> root;
-        std::vector<Node*> allNodes;
+        //std::vector<Node*> allNodes;
         std::vector<Obstacle> obstacles;
+        NodeManager nodeManager;
 
         double stepSize;
         double goalBias;
         double goalRadius;
         double rewireRadius;
 
+        int i;
+
         mutable std::mt19937 randomNumberGenerator;
 
         Generator(Point start, Point goal, BoundingBox bounds, double stepSize, double rewireRadius, double goalBias, double goalRadius, int iterations, const std::vector<Obstacle>& obstacles)
-            :   start(start), goal(goal), stepSize(stepSize), rewireRadius(rewireRadius), bounds(bounds), goalBias(goalBias), goalRadius(goalRadius), randomNumberGenerator(std::random_device{}()), obstacles(obstacles)
+            :   start(start), 
+                goal(goal), 
+                stepSize(stepSize), 
+                rewireRadius(rewireRadius), 
+                bounds(bounds), 
+                goalBias(goalBias), 
+                goalRadius(goalRadius), 
+                randomNumberGenerator(std::random_device{}()), 
+                obstacles(obstacles),
+                root(std::make_unique<Node>(nullptr, start)),
+                nodeManager(iterations)
         {
-            allNodes.reserve(iterations);
+            //allNodes.reserve(iterations);
             root = std::make_unique<Node>(nullptr, start);
-            allNodes.push_back(root.get());
+
+            //allNodes.push_back(root.get());
+            nodeManager.addNode(root.get());
+
+            i = 0;
         }
 
         void iterate();
