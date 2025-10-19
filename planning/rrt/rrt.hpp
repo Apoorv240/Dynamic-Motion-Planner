@@ -62,6 +62,7 @@ namespace RRT {
         void nodesInRadiusofPoint(std::vector<Node*>& nodeList, double radius, const Vec2d& point) const;
         Vec2d genRandPoint() const;
         bool pointIsValid(const Vec2d& p) const;
+        bool lineIsValid(const Vec2d& p1, const Vec2d& p2) const;
         Node* nearestNode(const Vec2d& point) const;
     };
 };

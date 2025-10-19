@@ -36,5 +36,6 @@ namespace RRT {
         }
 
         bool pointInObstacle(const Vec2d& p) const;
+        bool lineInObstacle(const Vec2d& p1, const Vec2d& p2) const;
     };
 }

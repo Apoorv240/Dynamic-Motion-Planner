@@ -15,7 +15,7 @@ int main() {
         start, 
         Vec2d(100,0),//Vec2d(170, 0), 
         RRT::BoundingBox(-182.88, -182.88, 182.88, 182.88),
-        10, 20, 0.4, 10, 16000,
+        10, 20, 0.4, 2, 16000,
         std::vector<RRT::Obstacle> {
             RRT::Obstacle::fromRectBottomLeft(44*2.54, -30*2.54, 10*2.54, 50*2.54),
             RRT::Obstacle::fromRectBottomLeft(-15 * 2.54, -15 * 2.54, 30 * 2.54, 30 * 2.54),
@@ -24,12 +24,21 @@ int main() {
     );
 
     int i = 0;
-    while (i < 2000) {
+
+    int iterations = 6000;
+    while (i < iterations) {
         g.iterate();
         i++;
     }
 
     auto endTime = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double, std::milli> duration = endTime - startTime;
+    std::cout << "Iterated for " << duration.count() << " milliseconds" << std::endl;
+    std::cout << "Iterated " << iterations << " times" << std::endl;
+    std::cout << g.nodeManager.size << " Nodes generated" << std::endl;
+
+    std::cout << "Generating files..." << std::endl << std::flush;
 
     std::ofstream outFile("scripts\\outAll.txt");
     for (auto obstacle : g.obstacles) {
@@ -40,7 +49,6 @@ int main() {
     }
 
     for (const auto& node : g.nodeManager.nodes) {
-        std::cout << "a";
         auto parent = node->parent;
         if (parent != nullptr) {
             outFile << parent->point.x() << " " << parent->point.y() << " ";
@@ -70,8 +78,7 @@ int main() {
 
     outFile2.close();
 
-    std::chrono::duration<double, std::milli> duration = endTime - startTime;
-    std::cout << "Iterated for: " << duration.count() << " milliseconds" << std::endl;
+
 
     // QuinticSegment qp(0, 10, 0, 10, 10, 0);
 

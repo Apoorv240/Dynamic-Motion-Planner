@@ -41,6 +41,15 @@ bool Generator::pointIsValid(const Vec2d& p) const {
     return true;
 }
 
+bool Generator::lineIsValid(const Vec2d& p1, const Vec2d& p2) const {
+    for (const auto& obstacle : obstacles) {
+        if (obstacle.lineInObstacle(p1, p2)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void Generator::iterate() {
     Vec2d randPoint = genRandPoint();
 
@@ -60,11 +69,16 @@ void Generator::iterate() {
 
     // Choose best parent
     double searchRadius = std::max(stepSize * 2, 
-        stepSize * std::sqrt(std::log(nodeManager.size) / nodeManager.size));
+        2 * stepSize * std::sqrt(std::log(nodeManager.size) / nodeManager.size));
     std::vector<Node*> nearbyNodes;
     nodesInRadiusofPoint(nearbyNodes, searchRadius, randPoint);
 
     Node* bestParent = findBestParent(nearbyNodes, randPoint, nearestNode);
+
+    // Check if line from best parent to new node intersects an obstacle
+    if (!lineIsValid(bestParent->point, randPoint)) {
+        return;
+    }
 
     // Wire new node to the best parent
     std::unique_ptr<Node> newNodePtr = std::make_unique<Node>(bestParent, randPoint);
@@ -76,12 +90,10 @@ void Generator::iterate() {
     nodeManager.addNode(newNode);
 
     // Rewire nearby nodes
-    std::vector<Node*> rewireCandidates;
-    nodesInRadiusofPoint(rewireCandidates, rewireRadius, newNode->point);
-    for (auto &node : rewireCandidates) {
+    for (auto &node : nearbyNodes) {
         if (node->point == newNode->point) continue;
         
-        if (node->cost > newNode->cost + (newNode->point - node->point).magnitude()) {
+        if (node->cost > newNode->cost + (newNode->point - node->point).magnitude() && lineIsValid(node->point, newNode->point)) {
             if (node->parent) {
                 auto nodePtr = std::find_if(node->parent->children.begin(), node->parent->children.end(),
                     [node](const std::unique_ptr<Node>& ptr) {
@@ -98,7 +110,15 @@ void Generator::iterate() {
         }
     }
 
-    if ((goal - newNode->point).magnitude() < goalRadius) {
+    if ((goal - newNode->point).magnitude() < stepSize) {
+        std::unique_ptr<Node> newGoalNodePtr = std::make_unique<Node>(newNode, goal);
+        Node* newGoalNode = newGoalNodePtr.get();
+        newNode->children.emplace_back(std::move(newGoalNodePtr));
+        newGoalNode->parent = newNode;
+        newGoalNode->calculateCost();
+
+        nodeManager.addNode(newGoalNode);
+
         foundPath = true;
         if (newNode->cost < bestPathCost) {
             bestPathCost = newNode->cost;
