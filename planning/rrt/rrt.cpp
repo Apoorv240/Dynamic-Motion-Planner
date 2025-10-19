@@ -4,13 +4,9 @@
 using namespace RRT;
 
 Vec2d Generator::genRandPoint() const {
-    std::uniform_real_distribution<> bias(0, 1);
-    if (bias(randomNumberGenerator) < goalBias) {
-        return goal;
-    }
-    std::uniform_real_distribution<> distX(bounds.minX, bounds.maxX);
-    std::uniform_real_distribution<> distY(bounds.minY, bounds.maxY);
-    return Vec2d(distX(randomNumberGenerator), distY(randomNumberGenerator));
+    if (!foundPath)
+        return sampleInBoundsWithBias(bounds, goal, goalBias, rand);
+    return sampleInInformedEllipse(start, goal, bestPathCost, bounds, goalBias, rand);
 }
 
 Node* Generator::nearestNode(const Vec2d& point) const {
@@ -101,6 +97,13 @@ void Generator::iterate() {
             
         }
     }
+
+    if ((goal - newNode->point).magnitude() < goalRadius) {
+        foundPath = true;
+        if (newNode->cost < bestPathCost) {
+            bestPathCost = newNode->cost;
+        }
+    }
 }
 
 Node* Generator::optimalNodeNearGoal() const {
@@ -114,7 +117,7 @@ Node* Generator::optimalNodeNearGoal() const {
     Node* bestCandidate = goalCandidates[0];
 
     for (auto& node : goalCandidates) {
-        if (node->cost < bestCandidate->cost) {
+        if (node->cost + (goal - node->point).magnitude() < bestCandidate->cost) {
             bestCandidate = node;
         }
     }

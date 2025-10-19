@@ -5,41 +5,32 @@
 #include <vector>
 #include <random>
 
-#include "point.hpp"
 #include "obstacle.hpp"
 #include "node.hpp"
 #include "nodeManager.hpp"
+#include "random.hpp"
 
 #include "../../math/Vec2d.hpp"
 
 namespace RRT {
-    struct BoundingBox {
-        double minX;
-        double minY;
-        double maxX;
-        double maxY;
-
-        BoundingBox(double minX, double minY, double maxX, double maxY)
-            : minX(minX), minY(minY), maxX(maxX), maxY(maxY)
-        {}
-    };
-
     class Generator {
         public:
         Vec2d start;
         Vec2d goal;
         BoundingBox bounds;
         std::unique_ptr<Node> root;
-        //std::vector<Node*> allNodes;
         std::vector<Obstacle> obstacles;
         NodeManager nodeManager;
+
+        mutable Random rand;
 
         double stepSize;
         double goalBias;
         double goalRadius;
         double rewireRadius;
 
-        mutable std::mt19937 randomNumberGenerator;
+        bool foundPath;
+        double bestPathCost;
 
         Generator(Vec2d start, Vec2d goal, BoundingBox bounds, double stepSize, double rewireRadius, double goalBias, double goalRadius, int iterations, const std::vector<Obstacle>& obstacles)
             :   start(start), 
@@ -49,9 +40,11 @@ namespace RRT {
                 bounds(bounds), 
                 goalBias(goalBias), 
                 goalRadius(goalRadius), 
-                randomNumberGenerator(std::random_device{}()), 
+                rand(), 
                 obstacles(obstacles),
                 root(std::make_unique<Node>(nullptr, start)),
+                foundPath(false),
+                bestPathCost(std::numeric_limits<double>::infinity()),
                 nodeManager(iterations)
         {
             //allNodes.reserve(iterations);
