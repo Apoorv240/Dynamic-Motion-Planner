@@ -13,7 +13,7 @@ int main() {
     Vec2d start = Vec2d(-170, 0);
     RRT::Generator g(
         start, 
-        Vec2d(170, 0), 
+        Vec2d(100,0),//Vec2d(170, 0), 
         RRT::BoundingBox(-182.88, -182.88, 182.88, 182.88),
         10, 20, 0.4, 10, 16000,
         std::vector<RRT::Obstacle> {
@@ -31,7 +31,7 @@ int main() {
 
     auto endTime = std::chrono::high_resolution_clock::now();
 
-    std::ofstream outFile("scripts\\out.txt");
+    std::ofstream outFile("scripts\\outAll.txt");
     for (auto obstacle : g.obstacles) {
         outFile << obstacle.polygon[0].x() << " " << obstacle.polygon[0].y() << std::endl;
         outFile << obstacle.polygon[1].x() << " " << obstacle.polygon[1].y() << std::endl;
@@ -39,25 +39,36 @@ int main() {
         outFile << obstacle.polygon[3].x() << " " << obstacle.polygon[3].y() << std::endl;
     }
 
-    // for (const auto& node : g.allNodes) {
-    //     std::cout << "a";
-    //     auto parent = node->parent;
-    //     if (parent != nullptr) {
-    //         outFile << parent->point.x << " " << parent->point.y << " ";
-    //     }
-    //     outFile << node->point.x << " " << node->point.y << std::endl; 
-    // }
+    for (const auto& node : g.nodeManager.nodes) {
+        std::cout << "a";
+        auto parent = node->parent;
+        if (parent != nullptr) {
+            outFile << parent->point.x() << " " << parent->point.y() << " ";
+        }
+        outFile << node->point.x() << " " << node->point.y() << std::endl; 
+    }
+
+    outFile.close();
+
+    std::ofstream outFile2("scripts\\outPath.txt");
+
+    for (auto obstacle : g.obstacles) {
+        outFile2 << obstacle.polygon[0].x() << " " << obstacle.polygon[0].y() << std::endl;
+        outFile2 << obstacle.polygon[1].x() << " " << obstacle.polygon[1].y() << std::endl;
+        outFile2 << obstacle.polygon[2].x() << " " << obstacle.polygon[2].y() << std::endl;
+        outFile2 << obstacle.polygon[3].x() << " " << obstacle.polygon[3].y() << std::endl;
+    }
     
     auto node = g.optimalNodeNearGoal();
     while (node->parent != nullptr) {
         auto parent = node->parent;
-        outFile << parent->point.x() << " " << parent->point.y() << " ";
-        outFile << node->point.x() << " " << node->point.y() << std::endl;
+        outFile2 << parent->point.x() << " " << parent->point.y() << " ";
+        outFile2 << node->point.x() << " " << node->point.y() << std::endl;
 
         node = node->parent;
     }
 
-    outFile.close();
+    outFile2.close();
 
     std::chrono::duration<double, std::milli> duration = endTime - startTime;
     std::cout << "Iterated for: " << duration.count() << " milliseconds" << std::endl;
