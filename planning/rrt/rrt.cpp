@@ -144,3 +144,15 @@ Node* Generator::optimalNodeNearGoal() const {
 
     return bestCandidate;
 }
+
+std::vector<Node*> Generator::getOptimalPath() const {
+    std::vector<Node*>optimalPath;
+    Node* node = optimalNodeNearGoal();
+    while (node->parent != nullptr) {
+        optimalPath.push_back(node);
+        node = node->parent;
+    }
+    optimalPath.push_back(node);
+    std::reverse(optimalPath.begin(), optimalPath.end());
+    return optimalPath;
+}

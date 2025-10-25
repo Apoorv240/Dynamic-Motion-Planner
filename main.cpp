@@ -7,6 +7,7 @@
 #include "math/QuinticSpline.hpp"
 #include "planning/Trajectory.hpp"
 #include "planning/rrt/rrt.hpp"
+#include "planning/spline/spline.hpp"
 
 int main() {
     auto startTime = std::chrono::high_resolution_clock::now();    
@@ -25,11 +26,20 @@ int main() {
 
     int i = 0;
 
-    int iterations = 6000;
+    int iterations = 2000;
     while (i < iterations) {
         g.iterate();
         i++;
     }
+
+    std::vector<RRT::Node*> path = g.getOptimalPath();
+    
+    Spline::Generator sg(path, 3);
+    sg.parameterize();
+    
+    sg.calculateKnots();
+    sg.calculateControlPoints();
+    auto points = sg.sampleSpline(100);
 
     auto endTime = std::chrono::high_resolution_clock::now();
 
@@ -37,6 +47,10 @@ int main() {
     std::cout << "Iterated for " << duration.count() << " milliseconds" << std::endl;
     std::cout << "Iterated " << iterations << " times" << std::endl;
     std::cout << g.nodeManager.size << " Nodes generated" << std::endl;
+
+    std::cout << "t: " << sg.t.size() << std::endl;
+    std::cout << "knots: " << sg.knots.size() << std::endl;
+    std::cout << "control: " << sg.controlPoints.size() << std::endl << std::endl;
 
     std::cout << "Generating files..." << std::endl << std::flush;
 
@@ -59,26 +73,85 @@ int main() {
     outFile.close();
 
     std::ofstream outFile2("scripts\\outPath.txt");
+    {
+        for (auto obstacle : g.obstacles) {
+            outFile2 << obstacle.polygon[0].x() << " " << obstacle.polygon[0].y() << std::endl;
+            outFile2 << obstacle.polygon[1].x() << " " << obstacle.polygon[1].y() << std::endl;
+            outFile2 << obstacle.polygon[2].x() << " " << obstacle.polygon[2].y() << std::endl;
+            outFile2 << obstacle.polygon[3].x() << " " << obstacle.polygon[3].y() << std::endl;
+        }
+        
+        //auto node = g.optimalNodeNearGoal();
+        std::vector<RRT::Node*> path = g.getOptimalPath();
+        // while (node->parent != nullptr) {
+        //     auto parent = node->parent;
+        //     outFile2 << parent->point.x() << " " << parent->point.y() << " ";
+        //     outFile2 << node->point.x() << " " << node->point.y() << std::endl;
 
-    for (auto obstacle : g.obstacles) {
-        outFile2 << obstacle.polygon[0].x() << " " << obstacle.polygon[0].y() << std::endl;
-        outFile2 << obstacle.polygon[1].x() << " " << obstacle.polygon[1].y() << std::endl;
-        outFile2 << obstacle.polygon[2].x() << " " << obstacle.polygon[2].y() << std::endl;
-        outFile2 << obstacle.polygon[3].x() << " " << obstacle.polygon[3].y() << std::endl;
-    }
-    
-    auto node = g.optimalNodeNearGoal();
-    while (node->parent != nullptr) {
-        auto parent = node->parent;
-        outFile2 << parent->point.x() << " " << parent->point.y() << " ";
-        outFile2 << node->point.x() << " " << node->point.y() << std::endl;
+        //     node = node->parent;
+        // }
 
-        node = node->parent;
-    }
+        for (auto node : path) {
+            if (node->parent) {
+                outFile2 << node->parent->point.x() << " " << node->parent->point.y() << " ";
+            }
+            outFile2 << node->point.x() << " " << node->point.y() << std::endl;
+        }
+    }   
 
     outFile2.close();
 
+    std::ofstream outFile3("scripts\\outSpline.txt");
+    {
+        for (auto obstacle : g.obstacles) {
+            outFile3 << obstacle.polygon[0].x() << " " << obstacle.polygon[0].y() << std::endl;
+            outFile3 << obstacle.polygon[1].x() << " " << obstacle.polygon[1].y() << std::endl;
+            outFile3 << obstacle.polygon[2].x() << " " << obstacle.polygon[2].y() << std::endl;
+            outFile3 << obstacle.polygon[3].x() << " " << obstacle.polygon[3].y() << std::endl;
+        }
 
+        for (auto point : points) {
+            outFile3 << point.x() << " " << point.y() << std::endl;
+        }
+    }
+    outFile3.close();
+
+    // auto goalNode = g.optimalNodeNearGoal();
+    // double total = goalNode->cost;
+    // std::vector<RRT::Node*> nodes;
+    // std::vector<double> t;
+    // RRT::Node* node = goalNode;
+    // while (node->parent != nullptr) {
+    //     t.push_back(node->cost / total);
+    //     nodes.push_back(node->parent);
+    //     node = node->parent;
+    // }
+    // nodes.push_back(node);
+    // t.push_back(node->cost / total);
+
+    // int p = 3;
+    // double n = nodes.size() - 1;
+    // std::vector<double> knots(n + p + 2);
+    // for (int i = 0; i <= p; i++) {
+    //     knots[i] = t[0];
+    // }
+
+    // for (int j = 1; j <= n - p; j++) {
+    //     double sum = 0;
+    //     for (int i = j; i < j + p; i++) {
+    //         sum += t[i];
+    //     }
+    //     knots[j + p] = sum / p;
+    // }
+
+    // for (int i = n + 1; i <= n + p + 1; i++) {
+    //     knots[i] = t[n];
+    // }
+
+    // for (auto i : knots) {
+    //     std::cout << i << std::endl;
+    // }
+    
 
     // QuinticSegment qp(0, 10, 0, 10, 10, 0);
 
