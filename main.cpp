@@ -26,7 +26,7 @@ int main() {
 
     int i = 0;
 
-    int iterations = 2000;
+    int iterations = 4000;
     while (i < iterations) {
         g.iterate();
         i++;

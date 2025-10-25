@@ -55,6 +55,10 @@ public:
         return origin + u * distance;
     }
 
+    double dot(const Vec2d& other) {
+        return x() * other.x() + y() * other.y();
+    }
+
     bool operator==(const Vec2d& other) const {
         return (x() == other.x() && y() == other.y());
     }
