@@ -10,8 +10,6 @@ subprocess.run(['../main.exe'], cwd="../")
 fig1, ax1 = plt.subplots()
 ax1.set_xlim(-182.88, 182.88)
 ax1.set_ylim(-182.88, 182.88)
-ax1.plot(-170, 0, 'ro')
-ax1.plot(100, 0, 'bo')
 
 with open("outPath.txt", "r") as f:
     lines = f.readlines()
@@ -38,8 +36,6 @@ for line in lines[13:]:
 fig3, ax3 = plt.subplots()
 ax3.set_xlim(-182.88, 182.88)
 ax3.set_ylim(-182.88, 182.88)
-ax3.plot(-170, 0, 'ro')
-ax3.plot(100, 0, 'bo')
 
 f = open("outAll.txt", "r")
 lines = f.readlines()
@@ -65,8 +61,6 @@ for line in lines[13:]:
 fig2, ax2 = plt.subplots()
 ax2.set_xlim(-182.88, 182.88)
 ax2.set_ylim(-182.88, 182.88)
-ax2.plot(-170, 0, 'ro')
-ax2.plot(100, 0, 'bo')
 
 with open("outSpline.txt", "r") as f:
     lines = f.readlines()

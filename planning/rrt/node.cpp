@@ -2,6 +2,8 @@
 
 using namespace RRT;
 
+#include <iostream>
+
 double Node::calculateCost() {
     if (parent == nullptr) {
         return 0;
@@ -24,7 +26,9 @@ double Node::calculateCost() {
         angleCost = angleWeight * (1 - cosTheta);
     }
 
-    double newCost = parent->cost + (point - parent->point).magnitude();//point.distToPoint(parent->point);
+    cumulativeDistance = parent->cumulativeDistance + (point - parent->point).magnitude();
+
+    double newCost = angleCost + parent->cost + (point - parent->point).magnitude();
     cost = newCost;
     return newCost;
 }

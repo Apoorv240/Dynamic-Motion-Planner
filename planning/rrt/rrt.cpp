@@ -6,7 +6,7 @@ using namespace RRT;
 Vec2d Generator::genRandPoint() const {
     if (!foundPath)
         return sampleInBoundsWithBias(bounds, goal, goalBias, rand);
-    return sampleInInformedEllipse(start, goal, bestPathCost, bounds, goalBias, rand);
+    return sampleInInformedEllipse(start, goal, bestPathDistance, bounds, goalBias, rand);
 }
 
 Node* Generator::nearestNode(const Vec2d& point) const {
@@ -122,6 +122,7 @@ void Generator::iterate() {
         foundPath = true;
         if (newNode->cost < bestPathCost) {
             bestPathCost = newNode->cost;
+            bestPathDistance = newNode->cumulativeDistance;
         }
     }
 }

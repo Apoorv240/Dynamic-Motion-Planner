@@ -11,10 +11,11 @@ namespace RRT {
         std::vector<std::unique_ptr<Node>> children;
         Vec2d point;
         double cost;
+        double cumulativeDistance;
         double angleWeight;
 
-        Node(Node* parent, Vec2d point, double angleWeight=3.5)
-            : parent(parent), children(), point(point), cost(0), angleWeight(angleWeight)
+        Node(Node* parent, Vec2d point, double angleWeight=50)
+            : parent(parent), children(), point(point), cost(0), angleWeight(angleWeight), cumulativeDistance(0)
         {}
 
         Node* getParentRaw() const;

@@ -7,8 +7,6 @@ ax1 = axes[0]
 #plt.axis([-182.88, 182.88, -182.88, 182.88])
 ax1.set_xlim(-182.88, 182.88)
 ax1.set_ylim(-182.88, 182.88)
-ax1.plot(-170, 0, 'ro')
-ax1.plot(100, 0, 'bo')
 
 f = open("outPath.txt", "r")
 lines = f.readlines()
@@ -58,8 +56,6 @@ for line in lines[13:]:
 ax2 = axes[1]
 ax2.set_xlim(-182.88, 182.88)
 ax2.set_ylim(-182.88, 182.88)
-ax2.plot(-170, 0, 'ro')
-ax2.plot(100, 0, 'bo')
 f = open("outSpline.txt", "r")
 lines = f.readlines()
 

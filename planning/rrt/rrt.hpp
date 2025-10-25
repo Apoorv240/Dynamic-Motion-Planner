@@ -28,6 +28,7 @@ namespace RRT {
                 root(std::make_unique<Node>(nullptr, start)),
                 foundPath(false),
                 bestPathCost(std::numeric_limits<double>::infinity()),
+                bestPathDistance(std::numeric_limits<double>::infinity()),
                 nodeManager(iterations)
         {
             //allNodes.reserve(iterations);
@@ -58,6 +59,7 @@ namespace RRT {
 
         bool foundPath;
         double bestPathCost;
+        double bestPathDistance;
 
         Node* findBestParent(const std::vector<Node*>& nodeList, const Vec2d& point, Node* nearestNode) const;
         void nodesInRadiusofPoint(std::vector<Node*>& nodeList, double radius, const Vec2d& point) const;
