@@ -58,7 +58,7 @@ double Generator::N(int i, double t, unsigned int p) {
     return leftTerm + rightTerm;
 }
 
-void Generator::calculateControlPoints() {
+void Generator::calculateControlPoints(double smoothingFactor) {
     int n = nodes.size() - 1;
 
     Eigen::MatrixXd Nmat(n+1, n+1);
@@ -75,8 +75,21 @@ void Generator::calculateControlPoints() {
         }
     }
 
-    Eigen::VectorXd ctrlX = Nmat.colPivHouseholderQr().solve(Px);
-    Eigen::VectorXd ctrlY = Nmat.colPivHouseholderQr().solve(Py);
+    Eigen::MatrixXd A = Nmat.transpose() * Nmat + smoothingFactor * Eigen::MatrixXd::Identity(n+1, n+1);
+    Eigen::VectorXd bx = Nmat.transpose() * Px;
+    Eigen::VectorXd by = Nmat.transpose() * Py;
+
+    // normalization factor: average diagonal
+    double scale = A.trace() / static_cast<double>(n + 1);
+    double lambda = smoothingFactor * scale; // normalized smoothing factor
+
+    // Optional safety: clamp alpha to reasonable bounds
+    // alpha = std::clamp(alpha, 1e-8, 1.0); // if desired
+
+    Eigen::MatrixXd Reg = A + lambda * Eigen::MatrixXd::Identity(n+1, n+1);
+
+    Eigen::VectorXd ctrlX = Reg.colPivHouseholderQr().solve(bx);
+    Eigen::VectorXd ctrlY = Reg.colPivHouseholderQr().solve(by);
 
     controlPoints.resize(n+1);
     for (int i = 0; i <= n; i++) {

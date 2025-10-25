@@ -38,7 +38,7 @@ int main() {
     sg.parameterize();
     
     sg.calculateKnots();
-    sg.calculateControlPoints();
+    sg.calculateControlPoints(1e-3);
     auto points = sg.sampleSpline(100);
 
     auto endTime = std::chrono::high_resolution_clock::now();

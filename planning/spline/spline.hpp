@@ -19,7 +19,7 @@ namespace Spline {
 
         void parameterize();
         void calculateKnots();
-        void calculateControlPoints();
+        void calculateControlPoints(double smoothingFactor);
         std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> sampleSpline(int numSamples);
     
         std::vector<double> t; // t
