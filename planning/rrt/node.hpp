@@ -14,7 +14,7 @@ namespace RRT {
         double cumulativeDistance;
         double angleWeight;
 
-        Node(Node* parent, Vec2d point, double angleWeight=50)
+        Node(Node* parent, Vec2d point, double angleWeight=1)
             : parent(parent), children(), point(point), cost(0), angleWeight(angleWeight), cumulativeDistance(0)
         {}
 

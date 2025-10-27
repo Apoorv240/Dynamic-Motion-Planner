@@ -77,19 +77,58 @@ for i in range(0, 12, 4):
     ax2.add_patch(polygon)
 
 # Collect all points
+x_spline_list = []
+y_spline_list = []
+
+for line in lines[13:]:
+    points = line.split(" ")
+    x_spline_list.append(float(points[0]))
+    y_spline_list.append(float(points[1]))
+
+# Draw as connected line segments (polyline)
+ax2.plot(x_spline_list, y_spline_list, color="black", linestyle='-', linewidth=2)
+
+# Optional: draw nodes as small dots
+ax2.scatter(x_spline_list, y_spline_list, color="red", s=10)
+
+# ----------------------
+# Fourth figure (outSpline.txt)
+# ----------------------
+fig4, ax4 = plt.subplots()
+ax4.set_xlim(-182.88, 182.88)
+ax4.set_ylim(-182.88, 182.88)
+
+with open("outGVF.txt", "r") as f:
+    lines = f.readlines()
+
+# Draw polygons
+for i in range(0, 12, 4):
+    vertices = [
+        (float(lines[i+0].split(" ")[0]), float(lines[i+0].split(" ")[1])),
+        (float(lines[i+1].split(" ")[0]), float(lines[i+1].split(" ")[1])),
+        (float(lines[i+2].split(" ")[0]), float(lines[i+2].split(" ")[1])),
+        (float(lines[i+3].split(" ")[0]), float(lines[i+3].split(" ")[1]))
+    ]
+    polygon = patches.Polygon(vertices, closed=True, edgecolor='black', facecolor='skyblue')
+    ax4.add_patch(polygon)
+
+# Collect all points
 x_list = []
 y_list = []
+dx_list = []
+dy_list = []
 
 for line in lines[13:]:
     points = line.split(" ")
     x_list.append(float(points[0]))
     y_list.append(float(points[1]))
+    dx_list.append(float(points[2]))
+    dy_list.append(float(points[3]))
 
+ax4.quiver(x_list, y_list, dx_list, dy_list, angles='xy', scale_units='xy', scale=0.5, color='blue')
 # Draw as connected line segments (polyline)
-ax2.plot(x_list, y_list, color="black", linestyle='-', linewidth=2)
+#ax4.plot(x_spline_list, y_spline_list, color="black", linestyle='-', linewidth=2)
 
-# Optional: draw nodes as small dots
-ax2.scatter(x_list, y_list, color="red", s=10)
 # ----------------------
 # Show both figures
 # ----------------------

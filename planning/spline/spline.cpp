@@ -1,17 +1,15 @@
 #include "spline.hpp"
 #include <iostream>
 
-using namespace Spline;
-
-void Generator::parameterize() {
-    double totalLength = nodes[nodes.size() - 1]->cost;
+void Spline::parameterize() {
+    double totalLength = nodes[nodes.size() - 1]->cumulativeDistance;
 
     for (const RRT::Node* node : nodes) {
-        t.push_back(node->cost/totalLength);
+        t.push_back(node->cumulativeDistance/totalLength);
     }
 }
 
-void Generator::calculateKnots() {
+void Spline::calculateKnots() {
     double n = nodes.size() - 1;
 
     for (int i = 0; i <= degree; i++) {
@@ -33,7 +31,7 @@ void Generator::calculateKnots() {
     }
 }
 
-double Generator::N(int i, double t, unsigned int p) {
+double Spline::N(int i, double t, unsigned int p) const {
     int n = nodes.size() - 1;
     if (p == 0) {
         if (t >= knots[i] && t < knots[i+1]) return 1.0;
@@ -58,7 +56,7 @@ double Generator::N(int i, double t, unsigned int p) {
     return leftTerm + rightTerm;
 }
 
-void Generator::calculateControlPoints(double smoothingFactor) {
+void Spline::calculateControlPoints(double smoothingFactor) {
     int n = nodes.size() - 1;
 
     Eigen::MatrixXd Nmat(n+1, n+1);
@@ -97,28 +95,134 @@ void Generator::calculateControlPoints(double smoothingFactor) {
     }
 }
 
+void Spline::calculateDerivativeControlPoints() {
+    int n = controlPoints.size() - 1;
 
-std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> Generator::sampleSpline(int numSamples) {
+    derivativeControlPoints.resize(n);
+    for (int i = 0; i < n; i++) {
+        double denom = knots[i + degree + 1] - knots[i + 1];
+        double coeff = (denom != 0.0) ? (degree / denom) : 0.0;
+        derivativeControlPoints[i] = coeff * (controlPoints[i + 1] - controlPoints[i]);
+    }
+}
+
+void Spline::calculateSecondDerivativeControlPoints() {
+    int n = derivativeControlPoints.size() - 1;
+
+    secondDerivativeControlPoints.resize(n);
+    for (int i = 0; i < n; i++) {
+        double denom = knots[i + degree] - knots[i + 2];
+        double coeff = (denom != 0.0) ? (degree / denom) : 0.0;
+        secondDerivativeControlPoints.push_back(coeff * (derivativeControlPoints[i + 1] - derivativeControlPoints[i]));
+    }
+}
+
+Eigen::Vector2d Spline::calculateAt(double t) const {
+    Eigen::Vector2d point(0,0);
+
+    int n = controlPoints.size() - 1;
+    for (int i = 0; i <= n; i++) {
+        point += N(i, t, degree) * controlPoints[i];
+    }
+
+    return point;
+}
+
+Eigen::Vector2d Spline::calculateDerivativeAt(double t) const {
+    Eigen::Vector2d point(0,0);
+
+    for (int i = 0; i < derivativeControlPoints.size(); i++) {
+        point += N(i, t, degree - 1) * derivativeControlPoints[i];
+    }
+
+    return point;
+}
+
+Eigen::Vector2d Spline::calculateSecondDerivativeAt(double t) const {
+    Eigen::Vector2d point(0,0);
+
+    for (int i = 0; i < secondDerivativeControlPoints.size(); i++) {
+        point += N(i, t, degree - 2) * secondDerivativeControlPoints[i];
+    }
+
+    return point;
+}
+
+std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> Spline::sampleSpline(int numSamples) const {
     std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> sampledCurve;
     if (controlPoints.empty()) return sampledCurve;
 
     int n = controlPoints.size() - 1;
     double tStart = knots[degree];
-    double tEnd   = knots[knots.size() - degree - 1];
+    double tEnd = knots[knots.size() - degree - 1];
     double dt = (tEnd - tStart) / (numSamples - 1);
 
     sampledCurve.reserve(numSamples);
 
-    for (int s = 0; s < numSamples; ++s) {
+    for (int s = 0; s < numSamples; s++) {
         double param = tStart + s * dt;
         if (param > tEnd) param = tEnd - 1e-9;
-        Eigen::Vector2d pt(0,0);
 
-        for (int i = 0; i <= n; ++i)
-            pt += N(i, param, degree) * controlPoints[i];
-
-        sampledCurve.push_back(pt);
+        sampledCurve.push_back(calculateAt(param));
     }
 
     return sampledCurve;
+}
+
+double Spline::nearestT(Eigen::Vector2d point, double numSamples) const {
+    // Coarsely sample curve
+    auto sampledCurve = sampleSpline(numSamples);
+
+    double tStart = knots[degree];
+    double tEnd = knots[knots.size() - degree - 1];
+    double dt = (tEnd - tStart) / (numSamples - 1);
+
+    double bestT = 0;
+    double bestSquaredDist = 1e9;
+    {
+        double t = 0;
+        for (const Eigen::Vector2d &vec : sampledCurve) {
+            double dist = (point - vec).squaredNorm();
+            if (dist < bestSquaredDist) {
+                bestT = t;
+                bestSquaredDist = dist;
+            }
+            t += dt;
+        }
+    }
+
+    // Newton-Rhapson
+    double t = bestT;
+    double epsilon = 1e-6;
+    int maxIter = 15;
+
+    while (maxIter-- > 0) {
+        Eigen::Vector2d Ct   = calculateAt(t);
+        Eigen::Vector2d Cdt  = calculateDerivativeAt(t);
+        Eigen::Vector2d Cddt = calculateSecondDerivativeAt(t);
+        double distanceDerivative      = 2 * (Ct - point).dot(Cdt);
+        double distanceSecondDerivative = 2 * (Cdt.dot(Cdt) + (Ct - point).dot(Cddt));
+
+        if (std::abs(distanceSecondDerivative) < 1e-8 || std::isnan(distanceSecondDerivative)) {
+            break; // Can't safely step
+        }
+        double t_next = t - distanceDerivative / distanceSecondDerivative;
+
+        // Clamp t to curve parameter range
+        t = tEnd ? t_next > tStart : t_next;
+        t = tStart ? t_next < tStart : t_next; //std::clamp(t_next, tStart, tEnd);
+
+        // Check for NaN
+        if (std::isnan(t) || std::isinf(t)) {
+            std::cerr << "t is NaN or Inf, breaking Newton-Raphson" << std::endl;
+            break;
+        }
+
+        // Optional: fast exit if already close
+        if (std::abs(distanceDerivative) < epsilon) {
+            break;
+        }
+    }
+
+    return bestT;
 }

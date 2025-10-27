@@ -6,13 +6,14 @@
 
 #include "planning/rrt/rrt.hpp"
 #include "planning/spline/spline.hpp"
+#include "planning/gvf/gvf.hpp"
 
 int main() {
     auto startTime = std::chrono::high_resolution_clock::now();    
     Vec2d start = Vec2d(-150, 0);
     RRT::Generator g(
         start, 
-        Vec2d(-50,0),//Vec2d(170, 0), 
+        Vec2d(150,0),//Vec2d(170, 0), 
         RRT::BoundingBox(-182.88, -182.88, 182.88, 182.88),
         10, 20, 0.4, 2, 16000,
         std::vector<RRT::Obstacle> {
@@ -32,11 +33,17 @@ int main() {
 
     std::vector<RRT::Node*> path = g.getOptimalPath();
     
-    Spline::Generator sg(path, 3);
+    Spline sg(path, 3);
     sg.parameterize();
     
     sg.calculateKnots();
     sg.calculateControlPoints(1e-3);
+    sg.calculateDerivativeControlPoints();
+    sg.calculateSecondDerivativeControlPoints();
+    sg.nearestT(Eigen::Vector2d(0, 0), 100);
+
+    GuidingVectorField gvf(sg);
+
     auto points = sg.sampleSpline(100);
 
     auto endTime = std::chrono::high_resolution_clock::now();
@@ -105,4 +112,27 @@ int main() {
         }
     }
     outFile3.close();
+
+    std::ofstream outFile4("scripts\\outGVF.txt");
+    {
+        for (auto obstacle : g.obstacles) {
+            outFile4 << obstacle.polygon[0].x() << " " << obstacle.polygon[0].y() << std::endl;
+            outFile4 << obstacle.polygon[1].x() << " " << obstacle.polygon[1].y() << std::endl;
+            outFile4 << obstacle.polygon[2].x() << " " << obstacle.polygon[2].y() << std::endl;
+            outFile4 << obstacle.polygon[3].x() << " " << obstacle.polygon[3].y() << std::endl;
+        }
+
+        for (int x = -180; x < 180; x+=10) {
+            for (int y = -180; y < 180; y+=10) {
+                auto v = gvf.calculateVectorAt(Eigen::Vector2d(x, y));
+                outFile4 << x << " " << y << " " << v.x() << " " << v.y() << std::endl;
+            }
+        }
+
+        for (auto point : points) {
+            auto v = gvf.calculateVectorAt(point);
+            outFile4 << point.x() << " " << point.y() << " " << v.x() << " " << v.y() << std::endl;
+        }
+    }
+    outFile4.close();
 }
