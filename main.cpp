@@ -13,7 +13,7 @@ int main() {
     Vec2d start = Vec2d(-150, 0);
     RRT::Generator g(
         start, 
-        Vec2d(150,0),//Vec2d(170, 0), 
+        Vec2d(75,0),//Vec2d(170, 0), 
         RRT::BoundingBox(-182.88, -182.88, 182.88, 182.88),
         10, 20, 0.4, 2, 16000,
         std::vector<RRT::Obstacle> {
