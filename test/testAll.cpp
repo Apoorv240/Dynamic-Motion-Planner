@@ -40,9 +40,8 @@ int main() {
     sg.calculateControlPoints(1e-3);
     sg.calculateDerivativeControlPoints();
     sg.calculateSecondDerivativeControlPoints();
-    sg.nearestT(Eigen::Vector2d(0, 0), 100);
 
-    GuidingVectorField gvf(sg);
+    GuidingVectorField gvf(sg, 5);
 
     auto points = sg.sampleSpline(100);
 

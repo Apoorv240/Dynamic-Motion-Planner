@@ -11,3 +11,5 @@ Trajectory.obj
 vc140.pdb
 CppProperties.json
 a.out
+obstacle.obj
+*.obj
