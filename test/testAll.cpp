@@ -32,9 +32,9 @@ int main() {
     Spline sg(path, 3);
     sg.generate(1e-5);
 
-    GuidingVectorField gvf(sg, 5);
+    GuidingVectorField gvf(sg, 10);
 
-    auto points = sg.sampleSpline(100);
+    auto points = sg.sampleSpline(50);
 
     auto endTime = std::chrono::high_resolution_clock::now();
 
@@ -112,8 +112,8 @@ int main() {
             outFile4 << obstacle.polygon[3].x() << " " << obstacle.polygon[3].y() << std::endl;
         }
 
-        for (int x = -180; x < 180; x+=10) {
-            for (int y = -180; y < 180; y+=10) {
+        for (int x = -180; x < 180; x+=15) {
+            for (int y = -180; y < 180; y+=15) {
                 auto v = gvf.calculateVectorAt(Eigen::Vector2d(x, y));
                 outFile4 << x << " " << y << " " << v.x() << " " << v.y() << std::endl;
             }

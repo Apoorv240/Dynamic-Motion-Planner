@@ -51,6 +51,10 @@ private:
     void calculateSecondDerivativeControlPoints();
     void generateArcLengthMapping(int numSamples);
 
+    Eigen::Vector2d calculateAtT(double t) const;
+    Eigen::Vector2d calculateDerivativeAtT(double t) const;
+    Eigen::Vector2d calculateSecondDerivativeAtT(double t) const;
+
     std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> sampleSplineT(int numSamples) const;
 
     std::vector<double> t; // t
@@ -79,11 +83,11 @@ public:
         generateArcLengthMapping(100);
     }
 
-    Eigen::Vector2d calculateAt(double t) const;
-    Eigen::Vector2d calculateDerivativeAt(double t) const;
-    Eigen::Vector2d calculateSecondDerivativeAt(double t) const;
+    Eigen::Vector2d calculateAt(double s) const { return calculateAtT(arcLengthTable.getT(s)); }
+    Eigen::Vector2d calculateDerivativeAt(double s) const { return calculateDerivativeAtT(arcLengthTable.getT(s)); }
+    Eigen::Vector2d calculateSecondDerivativeAt(double s) const { return calculateSecondDerivativeAtT(arcLengthTable.getT(s)); }
     
-    double nearestT(Eigen::Vector2d point, int numSamples) const;
+    double nearestS(Eigen::Vector2d point, int numSamples) const;
     std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> sampleSpline(int numSamples) const;
 
     int numT() const { return t.size(); }

@@ -125,7 +125,7 @@ for line in lines[13:]:
     dx_list.append(float(points[2])/(math.sqrt(float(points[2])*float(points[2]) + float(points[3])*float(points[3]))+0.0000001))
     dy_list.append(float(points[3])/(math.sqrt(float(points[2])*float(points[2]) + float(points[3])*float(points[3]))+0.0000001))
 
-ax4.quiver(x_list, y_list, dx_list, dy_list, angles='xy', scale_units='xy', scale=0.1, color='blue')
+ax4.quiver(x_list, y_list, dx_list, dy_list, angles='xy', scale_units='xy', scale=0.2, color='blue')
 # Draw as connected line segments (polyline)
 #ax4.plot(x_spline_list, y_spline_list, color="black", linestyle='-', linewidth=2)
 
