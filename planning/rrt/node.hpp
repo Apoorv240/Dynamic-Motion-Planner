@@ -18,8 +18,6 @@ namespace RRT {
             : parent(parent), children(), point(point), cost(0), angleWeight(angleWeight), cumulativeDistance(0)
         {}
 
-        Node* getParentRaw() const;
-
         double calculateCost();
         void propagateCost();
     };

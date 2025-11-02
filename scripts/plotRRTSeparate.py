@@ -3,7 +3,7 @@ import matplotlib.patches as patches
 import subprocess
 import math
 
-subprocess.run(['../main.exe'], cwd="../")
+subprocess.run(['../testAll.exe'], cwd="../")
 
 # ----------------------
 # First figure (outPath.txt)
@@ -47,7 +47,6 @@ for i in range(0, 12, 4):
         (float(lines[i+2].split(" ")[0]), float(lines[i+2].split(" ")[1])),
         (float(lines[i+3].split(" ")[0]), float(lines[i+3].split(" ")[1]))
     ]
-    print(i)
     polygon = patches.Polygon(vertices, closed=True, edgecolor='black', facecolor='skyblue')
     ax3.add_patch(polygon)
 

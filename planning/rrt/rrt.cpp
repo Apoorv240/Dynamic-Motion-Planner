@@ -157,3 +157,20 @@ std::vector<Node*> Generator::getOptimalPath() const {
     std::reverse(optimalPath.begin(), optimalPath.end());
     return optimalPath;
 }
+
+int Generator::iterateUntilPathFound(int maxIter) {
+    for (int i = 0; i < maxIter; i++) {
+        iterate();
+
+        if (foundPath) return i;
+        i++;
+    }
+
+    return 0;
+}
+
+void Generator::iterateIterations(int iter) {
+    for (int i = 0; i < iter; i++) {
+        iterate();
+    }
+}

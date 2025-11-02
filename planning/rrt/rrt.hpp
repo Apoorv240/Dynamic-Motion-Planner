@@ -14,12 +14,11 @@
 
 namespace RRT {
     class Generator {
-        public:
-        Generator(Vec2d start, Vec2d goal, BoundingBox bounds, double stepSize, double rewireRadius, double goalBias, double goalRadius, int iterations, const std::vector<Obstacle>& obstacles)
+    public:
+        Generator(Vec2d start, Vec2d goal, BoundingBox bounds, double stepSize, double goalBias, double goalRadius, int iterations, const std::vector<Obstacle>& obstacles)
             :   start(start), 
                 goal(goal), 
                 stepSize(stepSize), 
-                rewireRadius(rewireRadius), 
                 bounds(bounds), 
                 goalBias(goalBias), 
                 goalRadius(goalRadius), 
@@ -31,20 +30,19 @@ namespace RRT {
                 bestPathDistance(std::numeric_limits<double>::infinity()),
                 nodeManager(iterations)
         {
-            //allNodes.reserve(iterations);
             root = std::make_unique<Node>(nullptr, start);
-
-            //allNodes.push_back(root.get());
             nodeManager.addNode(root.get());
         }
 
         void iterate();
+        int iterateUntilPathFound(int maxIter);
+        void iterateIterations(int iter);
         Node* optimalNodeNearGoal() const;
         std::vector<Node*> getOptimalPath() const;
         std::vector<Obstacle> obstacles;
         NodeManager nodeManager;
 
-        private:
+    private:
         Vec2d start;
         Vec2d goal;
         BoundingBox bounds;
@@ -55,7 +53,6 @@ namespace RRT {
         double stepSize;
         double goalBias;
         double goalRadius;
-        double rewireRadius;
 
         bool foundPath;
         double bestPathCost;

@@ -4,9 +4,9 @@
 #include <string>
 #include <chrono>
 
-#include "planning/rrt/rrt.hpp"
-#include "planning/spline/spline.hpp"
-#include "planning/gvf/gvf.hpp"
+#include "../planning/rrt/rrt.hpp"
+#include "../planning/spline/spline.hpp"
+#include "../planning/gvf/gvf.hpp"
 
 int main() {
     auto startTime = std::chrono::high_resolution_clock::now();    
@@ -15,7 +15,7 @@ int main() {
         start, 
         Vec2d(75,0),//Vec2d(170, 0), 
         RRT::BoundingBox(-182.88, -182.88, 182.88, 182.88),
-        10, 20, 0.4, 2, 16000,
+        20, 0.4, 2, 2000,
         std::vector<RRT::Obstacle> {
             RRT::Obstacle::fromRectBottomLeft(44*2.54, -30*2.54, 10*2.54, 50*2.54),
             RRT::Obstacle::fromRectBottomLeft(-15 * 2.54, -15 * 2.54, 30 * 2.54, 30 * 2.54),
@@ -23,23 +23,14 @@ int main() {
         }
     );
 
-    int i = 0;
-
-    int iterations = 4000;
-    while (i < iterations) {
-        g.iterate();
-        i++;
-    }
+    //int iterations = g.iterateUntilPathFound(5000);
+    int iterations = 2000;
+    g.iterateIterations(iterations);
 
     std::vector<RRT::Node*> path = g.getOptimalPath();
     
     Spline sg(path, 3);
-    sg.parameterize();
-    
-    sg.calculateKnots();
-    sg.calculateControlPoints(1e-3);
-    sg.calculateDerivativeControlPoints();
-    sg.calculateSecondDerivativeControlPoints();
+    sg.generate(1e-5);
 
     GuidingVectorField gvf(sg, 5);
 
@@ -52,9 +43,9 @@ int main() {
     std::cout << "Iterated " << iterations << " times" << std::endl;
     std::cout << g.nodeManager.size << " Nodes generated" << std::endl;
 
-    std::cout << "t: " << sg.t.size() << std::endl;
-    std::cout << "knots: " << sg.knots.size() << std::endl;
-    std::cout << "control: " << sg.controlPoints.size() << std::endl << std::endl;
+    std::cout << "t: " << sg.numT() << std::endl;
+    std::cout << "knots: " << sg.numKnots() << std::endl;
+    std::cout << "control: " << sg.numControlPoints() << std::endl << std::endl;
 
     std::cout << "Generating files..." << std::endl << std::flush;
 

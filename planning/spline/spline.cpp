@@ -148,11 +148,10 @@ Eigen::Vector2d Spline::calculateSecondDerivativeAt(double t) const {
     return point;
 }
 
-std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> Spline::sampleSpline(int numSamples) const {
+std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> Spline::sampleSplineT(int numSamples) const {
     std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> sampledCurve;
     if (controlPoints.empty()) return sampledCurve;
 
-    int n = controlPoints.size() - 1;
     double tStart = knots[degree];
     double tEnd = knots[knots.size() - degree - 1];
     double dt = (tEnd - tStart) / (numSamples - 1);
@@ -169,7 +168,30 @@ std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> Spline::
     return sampledCurve;
 }
 
-double Spline::nearestT(Eigen::Vector2d point, double numSamples) const {
+std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> Spline::sampleSpline(int numSamples) const {
+    std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> sampledCurve;
+    if (controlPoints.empty()) return sampledCurve;
+
+    double tStart = knots[degree];
+    double tEnd = knots[knots.size() - degree - 1];
+
+    double sStart = 0;
+    double sEnd = arcLengthTable.maxS;
+    double dS = (sEnd - sStart) / (numSamples - 1);
+
+    sampledCurve.reserve(numSamples);
+
+    for (int i = 0; i < numSamples; i++) {
+        double param = tStart + arcLengthTable.getT(i * dS);
+        if (param > tEnd) param = tEnd - 1e-9;
+
+        sampledCurve.push_back(calculateAt(param));
+    }
+
+    return sampledCurve;
+}
+
+double Spline::nearestT(Eigen::Vector2d point, int numSamples) const {
     // Coarsely sample curve
     auto sampledCurve = sampleSpline(numSamples);
 
@@ -225,4 +247,22 @@ double Spline::nearestT(Eigen::Vector2d point, double numSamples) const {
     }
 
     return bestT;
+}
+
+void Spline::generateArcLengthMapping(int numSamples) {
+    double tStart = knots[degree];
+    double tEnd = knots[knots.size() - degree - 1];
+    double dt = (tEnd - tStart) / (numSamples - 1);
+
+    std::vector<double> tSamples;
+
+    auto points = sampleSplineT(numSamples);
+    tSamples.resize(points.size());
+
+    tSamples[0] = 0;
+    for (size_t i = 1; i < points.size(); i++) {
+        tSamples[i] = tSamples[i-1] + dt;
+    }
+
+    arcLengthTable.generate(tSamples, points);
 }
