@@ -67,8 +67,10 @@ private:
     SplineArcLengthTable arcLengthTable;
 
 public:
-    std::vector<RRT::Node*>& nodes;
+    std::vector<RRT::Node*> nodes;
     unsigned int degree;
+
+    Spline() = default;
     Spline(std::vector<RRT::Node*>& nodes, unsigned int degree)
         :  nodes(nodes), degree(degree), knots(nodes.size() + degree + 1)
     {

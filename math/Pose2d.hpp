@@ -1,10 +1,9 @@
 #pragma once
 
-#include "Point2d.hpp"
 #include "Vec2d.hpp"
 
 struct Pose2d {
-    Point2d pos;
+    Vec2d pos;
     double heading;
     Vec2d vel;
     Vec2d acc;
