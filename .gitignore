@@ -7,3 +7,8 @@
 *.pdb
 *.exe
 CppProperties.json
+scripts/out.txt
+scripts/outPath.txt
+scripts/outAll.txt
+scripts/outGVF.txt
+.gitignore
