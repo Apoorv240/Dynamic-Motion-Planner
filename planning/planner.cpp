@@ -3,6 +3,5 @@
 void Planner::genGlobalPath() {
     rrt.iterateIterations(RRT_ITERATIONS);
     auto v = rrt.getOptimalPath();
-    globalPath = Spline(v, 3);
-    globalPath.generate(1e-5);
+    globalPath.generate(v, 3, 1e-4);
 }

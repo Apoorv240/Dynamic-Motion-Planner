@@ -1,11 +1,14 @@
 #include "gvf.hpp"
 #include <iostream>
 
-Eigen::Vector2d GuidingVectorField::calculateVectorAt(Eigen::Vector2d point, const Spline& spline, double convergenceFactor) {
-    double t = spline.nearestS(point + Eigen::Vector2d(1e-9, 1e-9), 1000);
-    Eigen::Vector2d tangent = spline.calculateDerivativeAt(t) + Eigen::Vector2d(1e-9, 1e-9);
-    Eigen::Vector2d secondDerivative = spline.calculateSecondDerivativeAt(t) + Eigen::Vector2d(1e-9, 1e-9);
-    double curvature = 0;//std::abs(tangent.cross(secondDerivative)) / std::pow(tangent.norm(), 3);
-    Eigen::Vector2d perpendicular = (spline.calculateAt(t) - point) * convergenceFactor;
-    return (tangent + perpendicular).normalized() * perpendicular.norm() / (1+curvature);
+Eigen::Vector2d GuidingVectorField::calculateVectorAt(Eigen::Vector2d point, const spline::FittedSpline& spline, double convergenceFactor) {
+    double s = spline.nearestS(point, 1000);
+    Eigen::Vector2d tangent = spline.calculateDerivativeAt(s);
+    Eigen::Vector2d perpendicular = (spline.calculateAt(s) - point);
+
+    if (perpendicular.norm() < 1e-1) {
+        return tangent.normalized();
+    }
+
+    return (tangent + perpendicular * convergenceFactor).normalized();
 }

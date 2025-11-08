@@ -1,15 +1,25 @@
 #include "clampedBSpline.hpp"
 
-#include "../../../third_party/eigen/Dense"
-#include "../../../third_party/eigen/QR"
 
 using namespace spline;
 
 void ClampedBSpline::parameterize() {
-    double dt = 1 / points.size();
+    size_t n = points.size();
+    if (n == 0) return;
 
-    for (size_t i = 0; i < points.size(); i++) {
-        points[i].t = i * dt;
+    // 1. Compute cumulative chord lengths
+    std::vector<double> chordLengths(n, 0.0);
+    for (size_t i = 1; i < n; i++) {
+        double dist = (points[i].point - points[i-1].point).norm();
+        chordLengths[i] = chordLengths[i-1] + dist;
+    }
+
+    double totalLength = chordLengths.back();
+    if (totalLength == 0.0) totalLength = 1.0; // avoid divide by zero
+
+    // 2. Normalize cumulative distances to [0,1]
+    for (size_t i = 0; i < n; ++i) {
+        points[i].t = chordLengths[i] / totalLength;
     }
 }
 
@@ -64,10 +74,11 @@ void ClampedBSpline::calculateControlPoints(double smoothingFactor) {
     int n = points.size() - 1;
 
     Eigen::MatrixXd Nmat(n+1, n+1);
-    Eigen::VectorXd P(n+1);
+    Eigen::VectorXd Px(n+1), Py(n+1);
 
     for (int i = 0; i <= n; i++) {
-        P(i) = points[i].point;
+        Px(i) = points[i].point.x();
+        Py(i) = points[i].point.y();
     }
 
     for (int i = 0; i <= n; i++) {
@@ -76,23 +87,22 @@ void ClampedBSpline::calculateControlPoints(double smoothingFactor) {
         }
     }
 
-    Eigen::MatrixXd A = Nmat.transpose() * Nmat + smoothingFactor * Eigen::MatrixXd::Identity(n+1, n+1);
-    Eigen::VectorXd bx = Nmat.transpose() * P;
+    Eigen::MatrixXd A = Nmat.transpose() * Nmat;// + smoothingFactor * Eigen::MatrixXd::Identity(n+1, n+1);
+    Eigen::VectorXd bx = Nmat.transpose() * Px;
+    Eigen::VectorXd by = Nmat.transpose() * Py;
 
     // normalization factor: average diagonal
     double scale = A.trace() / static_cast<double>(n + 1);
     double lambda = smoothingFactor * scale; // normalized smoothing factor
 
-    // Optional safety: clamp alpha to reasonable bounds
-    // alpha = std::clamp(alpha, 1e-8, 1.0); // if desired
-
     Eigen::MatrixXd Reg = A + lambda * Eigen::MatrixXd::Identity(n+1, n+1);
 
     Eigen::VectorXd ctrlX = Reg.colPivHouseholderQr().solve(bx);
+    Eigen::VectorXd ctrlY = Reg.colPivHouseholderQr().solve(by);
 
     controlPoints.resize(n+1);
     for (int i = 0; i <= n; i++) {
-        controlPoints[i] = ctrlX(i);
+        controlPoints[i] = Eigen::Vector2d(ctrlX(i), ctrlY(i));
     }
 }
 
@@ -118,8 +128,8 @@ void ClampedBSpline::calculateSecondDerivativeControlPoints() {
     }
 }
 
-double ClampedBSpline::calculateAt(double t) const {
-    double point = 0;
+Eigen::Vector2d ClampedBSpline::calculateAt(double t) const {
+    Eigen::Vector2d point(0, 0);
 
     int n = controlPoints.size() - 1;
     for (int i = 0; i <= n; i++) {
@@ -129,12 +139,12 @@ double ClampedBSpline::calculateAt(double t) const {
     return point;
 }
 
-double ClampedBSpline::calculateDerivativeAt(double t) const {
+Eigen::Vector2d ClampedBSpline::calculateDerivativeAt(double t) const {
     double tStart = knots[degree];
     double tEnd   = knots[knots.size() - degree - 1];
-    t = std::clamp(t, tStart, tEnd - 1e-12);
+    t = std::clamp(t, tStart + 1e-12, tEnd - 1e-12);
 
-    double point = 0;
+    Eigen::Vector2d point(0, 0);
 
     for (int i = 0; i < static_cast<int>(derivativeControlPoints.size()); i++) {
         point += N(i + 1, t, degree - 1) * derivativeControlPoints[i];
@@ -143,8 +153,12 @@ double ClampedBSpline::calculateDerivativeAt(double t) const {
     return point;
 }
 
-double ClampedBSpline::calculateSecondDerivativeAt(double t) const {
-    double point = 0;
+Eigen::Vector2d ClampedBSpline::calculateSecondDerivativeAt(double t) const {
+    Eigen::Vector2d point(0, 0);
+
+    double tStart = knots[degree];
+    double tEnd   = knots[knots.size() - degree - 1];
+    t = std::clamp(t, tStart + 1e-12, tEnd - 1e-12);
 
     for (int i = 0; i < secondDerivativeControlPoints.size(); i++) {
         point += N(i, t, degree - 2) * secondDerivativeControlPoints[i];
@@ -153,7 +167,15 @@ double ClampedBSpline::calculateSecondDerivativeAt(double t) const {
     return point;
 }
 
-void ClampedBSpline::generateAll(double smoothingFactor) {
+void ClampedBSpline::generateAll(std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> interpPoints, int degree, double smoothingFactor) {
+    points.reserve(interpPoints.size());
+    for (const Eigen::Vector2d& point : interpPoints) {
+        points.push_back(Point(0.0, point));
+    }
+
+    this->degree = degree;
+    this->knots.resize(interpPoints.size() + degree + 1);
+
     parameterize();
     calculateKnots();
     calculateControlPoints(smoothingFactor);

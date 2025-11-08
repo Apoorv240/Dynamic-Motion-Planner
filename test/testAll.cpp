@@ -75,15 +75,15 @@ int main() {
         auto direction = planner.getDirectionVectorAt(
             Eigen::Vector2d(simRobot.pose.pos.x(), simRobot.pose.pos.y()));
 
-        auto displayDirection = Eigen::Vector2d(simRobot.pose.pos.x(), simRobot.pose.pos.y()) + direction;
+        auto displayDirection = Eigen::Vector2d(simRobot.pose.pos.x(), simRobot.pose.pos.y()) + direction*10;
 
         // 4. Send robot position
         fprintf(gp, "%f %f\n", simRobot.pose.pos.x(), simRobot.pose.pos.y());
         fprintf(gp, "e\n");
 
-        // fprintf(gp, "unset arrow\n"); // remove previous arrow (important)
-        // fprintf(gp, "set arrow from %f,%f to %f,%f lw 2 lc rgb 'red' head filled size screen 0.02,15,45\n",
-        // simRobot.pose.pos.x(), simRobot.pose.pos.y(), displayDirection.x(), displayDirection.y());
+        fprintf(gp, "unset arrow\n"); // remove previous arrow (important)
+        fprintf(gp, "set arrow from %f,%f to %f,%f lw 2 lc rgb 'red' head filled size screen 0.02,15,45\n",
+        simRobot.pose.pos.x(), simRobot.pose.pos.y(), displayDirection.x(), displayDirection.y());
 
         fflush(gp);
 

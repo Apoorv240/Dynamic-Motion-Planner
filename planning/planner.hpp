@@ -9,7 +9,7 @@
 class Planner {
 public:
     RRT::Generator rrt;
-    Spline globalPath;
+    spline::FittedSpline globalPath;
 
     static constexpr double GOAL_BIAS = 0.4;
     static constexpr int RESOLUTION = 20;
