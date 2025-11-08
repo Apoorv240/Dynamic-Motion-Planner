@@ -4,36 +4,16 @@
 #include <string>
 #include <chrono>
 
+#include <windows.h>
+
 #include "../planning/rrt/rrt.hpp"
 #include "../planning/spline/spline.hpp"
 #include "../planning/gvf/gvf.hpp"
 #include "../planning/planner.hpp"
+#include "../simulation/robot.hpp"
 
 int main() {
-    auto startTime = std::chrono::high_resolution_clock::now();    
-    // Vec2d start = Vec2d(-150, 0);
-    // RRT::Generator g(
-    //     start, 
-    //     Vec2d(75,0),//Vec2d(170, 0), 
-    //     RRT::BoundingBox(-182.88, -182.88, 182.88, 182.88),
-    //     20, 0.4, 2, 2000,
-    //     std::vector<RRT::Obstacle> {
-    //         RRT::Obstacle::fromRectBottomLeft(44*2.54, -30*2.54, 10*2.54, 50*2.54),
-    //         RRT::Obstacle::fromRectBottomLeft(-15 * 2.54, -15 * 2.54, 30 * 2.54, 30 * 2.54),
-    //         RRT::Obstacle::fromRectBottomLeft(-51 * 2.54, -27 * 2.54, 10 * 2.54, 50 * 2.54),
-    //     }
-    // );
-
-    // //int iterations = g.iterateUntilPathFound(5000);
-    // int iterations = 2000;
-    // g.iterateIterations(iterations);
-
-    // std::vector<RRT::Node*> path = g.getOptimalPath();
-    
-    // Spline sg(path, 3);
-    // sg.generate(1e-5);
-
-    // auto points = sg.sampleSpline(50);
+    auto startTime = std::chrono::high_resolution_clock::now();
 
     Pose2d startPose = Pose2d(-150, 0);
     Pose2d endPose = Pose2d(75, 0);
@@ -50,92 +30,66 @@ int main() {
     auto endTime = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double, std::milli> duration = endTime - startTime;
-    std::cout << "Iterated for " << duration.count() << " milliseconds" << std::endl;
-    std::cout << "Iterated " << planner.RRT_ITERATIONS << " times" << std::endl;
-    // std::cout << g.nodeManager.size << " Nodes generated" << std::endl;
+    std::cout << "Generated for " << duration.count() << " milliseconds" << std::endl;
 
-    // std::cout << "t: " << sg.numT() << std::endl;
-    // std::cout << "knots: " << sg.numKnots() << std::endl;
-    // std::cout << "control: " << sg.numControlPoints() << std::endl << std::endl;
 
-    std::cout << "Generating files..." << std::endl << std::flush;
+    Robot simRobot(Pose2d(-150, 0));
 
-    auto points = planner.globalPath.sampleSpline(50);
+    FILE* gp = _popen("gnuplot -persistent", "w");
+    if (!gp) return 1;
 
-    std::ofstream outFile("scripts\\outAll.txt");
-    for (auto obstacle : obstacles) {
-        outFile << obstacle.polygon[0].x() << " " << obstacle.polygon[0].y() << std::endl;
-        outFile << obstacle.polygon[1].x() << " " << obstacle.polygon[1].y() << std::endl;
-        outFile << obstacle.polygon[2].x() << " " << obstacle.polygon[2].y() << std::endl;
-        outFile << obstacle.polygon[3].x() << " " << obstacle.polygon[3].y() << std::endl;
-    }
+    // Set up plot
+    fprintf(gp, "set xrange [-182.88:182.88]\nset yrange [-182.88:182.88]\n");
+    fprintf(gp, "set xlabel 'x'\nset ylabel 'y'\n");
+    fprintf(gp, "set key off\n");
 
-    for (const auto& node : planner.rrt.nodeManager.nodes) {
-        auto parent = node->parent;
-        if (parent != nullptr) {
-            outFile << parent->point.x() << " " << parent->point.y() << " ";
+    // Animate robot
+    while (!simRobot.atTarget(endPose.pos, 3)) {
+        // 1. Build the plot command for all obstacles + path + robot
+        fprintf(gp, "plot ");
+        for (size_t i = 0; i < obstacles.size(); ++i) {
+            fprintf(gp, "'-' with lines lt rgb 'blue' lw 2");
+            if (i != obstacles.size() - 1) fprintf(gp, ", "); // comma between obstacles
         }
-        outFile << node->point.x() << " " << node->point.y() << std::endl; 
-    }
+        if (!obstacles.empty()) fprintf(gp, ", "); // comma before path if there are obstacles
+        fprintf(gp, "'-' with lines lt rgb 'black' lw 2, "); // path
+        fprintf(gp, "'-' with points pt 7 ps 2 lc rgb 'red'\n"); // robot
 
-    outFile.close();
-
-    std::ofstream outFile2("scripts\\outPath.txt");
-    {
-        for (auto obstacle : obstacles) {
-            outFile2 << obstacle.polygon[0].x() << " " << obstacle.polygon[0].y() << std::endl;
-            outFile2 << obstacle.polygon[1].x() << " " << obstacle.polygon[1].y() << std::endl;
-            outFile2 << obstacle.polygon[2].x() << " " << obstacle.polygon[2].y() << std::endl;
-            outFile2 << obstacle.polygon[3].x() << " " << obstacle.polygon[3].y() << std::endl;
-        }
-        
-        std::vector<RRT::Node*> path = planner.rrt.getOptimalPath();
-
-        for (auto node : path) {
-            if (node->parent) {
-                outFile2 << node->parent->point.x() << " " << node->parent->point.y() << " ";
+        // 2. Send obstacle data
+        for (auto &obstacle : obstacles) {
+            for (auto &pt : obstacle.polygon) {
+                fprintf(gp, "%f %f\n", pt.x(), pt.y());
             }
-            outFile2 << node->point.x() << " " << node->point.y() << std::endl;
-        }
-    }   
-
-    outFile2.close();
-
-    std::ofstream outFile3("scripts\\outSpline.txt");
-    {
-        for (auto obstacle : obstacles) {
-            outFile3 << obstacle.polygon[0].x() << " " << obstacle.polygon[0].y() << std::endl;
-            outFile3 << obstacle.polygon[1].x() << " " << obstacle.polygon[1].y() << std::endl;
-            outFile3 << obstacle.polygon[2].x() << " " << obstacle.polygon[2].y() << std::endl;
-            outFile3 << obstacle.polygon[3].x() << " " << obstacle.polygon[3].y() << std::endl;
+            // Optionally close the polygon by repeating the first point
+            fprintf(gp, "%f %f\n", obstacle.polygon[0].x(), obstacle.polygon[0].y());
+            fprintf(gp, "e\n");
         }
 
-        for (auto point : points) {
-            outFile3 << point.x() << " " << point.y() << std::endl;
+        // 3. Send global path data
+        auto points = planner.globalPath.sampleSpline(100);
+        for (auto &pt : points) {
+            fprintf(gp, "%f %f\n", pt.x(), pt.y());
         }
+        fprintf(gp, "e\n");
+
+        auto direction = planner.getDirectionVectorAt(
+            Eigen::Vector2d(simRobot.pose.pos.x(), simRobot.pose.pos.y()));
+
+        auto displayDirection = Eigen::Vector2d(simRobot.pose.pos.x(), simRobot.pose.pos.y()) + direction;
+
+        // 4. Send robot position
+        fprintf(gp, "%f %f\n", simRobot.pose.pos.x(), simRobot.pose.pos.y());
+        fprintf(gp, "e\n");
+
+        // fprintf(gp, "unset arrow\n"); // remove previous arrow (important)
+        // fprintf(gp, "set arrow from %f,%f to %f,%f lw 2 lc rgb 'red' head filled size screen 0.02,15,45\n",
+        // simRobot.pose.pos.x(), simRobot.pose.pos.y(), displayDirection.x(), displayDirection.y());
+
+        fflush(gp);
+
+        // 5. Update robot (simulation)
+        simRobot.update(direction, 10);
     }
-    outFile3.close();
 
-    std::ofstream outFile4("scripts\\outGVF.txt");
-    {
-        for (auto obstacle : obstacles) {
-            outFile4 << obstacle.polygon[0].x() << " " << obstacle.polygon[0].y() << std::endl;
-            outFile4 << obstacle.polygon[1].x() << " " << obstacle.polygon[1].y() << std::endl;
-            outFile4 << obstacle.polygon[2].x() << " " << obstacle.polygon[2].y() << std::endl;
-            outFile4 << obstacle.polygon[3].x() << " " << obstacle.polygon[3].y() << std::endl;
-        }
-
-        for (int x = -180; x < 180; x+=15) {
-            for (int y = -180; y < 180; y+=15) {
-                auto v = planner.getDirectionVectorAt(Eigen::Vector2d(x, y));
-                outFile4 << x << " " << y << " " << v.x() << " " << v.y() << std::endl;
-            }
-        }
-
-        for (auto point : points) {
-            auto v = planner.getDirectionVectorAt(point);
-            outFile4 << point.x() << " " << point.y() << " " << v.x() << " " << v.y() << std::endl;
-        }
-    }
-    outFile4.close();
+    _pclose(gp);
 }

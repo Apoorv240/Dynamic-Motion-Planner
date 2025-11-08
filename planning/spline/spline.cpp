@@ -129,9 +129,13 @@ Eigen::Vector2d Spline::calculateAtT(double t) const {
 }
 
 Eigen::Vector2d Spline::calculateDerivativeAtT(double t) const {
+    double tStart = knots[degree];
+    double tEnd   = knots[knots.size() - degree - 1];
+    t = std::clamp(t, tStart, tEnd - 1e-12);
+
     Eigen::Vector2d point(0,0);
 
-    for (int i = 0; i < derivativeControlPoints.size(); i++) {
+    for (int i = 0; i < static_cast<int>(derivativeControlPoints.size()); i++) {
         point += N(i + 1, t, degree - 1) * derivativeControlPoints[i];
     }
 
@@ -213,32 +217,32 @@ double Spline::nearestS(Eigen::Vector2d point, int numSamples) const {
         }
     }
 
-    // // Newton-Rhapson
-    // double s = bestS;
-    // double epsilon = 1e-6;
-    // int maxIter = 15;
+    // Newton-Rhapson
+    double s = bestS;
+    double epsilon = 1e-6;
+    int maxIter = 15;
 
-    // while (maxIter-- > 0) {
-    //     Eigen::Vector2d Ct = calculateAt(s);
-    //     Eigen::Vector2d Cdt = calculateDerivativeAt(s);
-    //     Eigen::Vector2d Cddt = calculateSecondDerivativeAt(s);
-    //     double distanceDerivative      = 2 * (Ct - point).dot(Cdt);
-    //     double distanceSecondDerivative = 2 * (Cdt.dot(Cdt) + (Ct - point).dot(Cddt));
+    while (maxIter-- > 0) {
+        Eigen::Vector2d Ct = calculateAt(s);
+        Eigen::Vector2d Cdt = calculateDerivativeAt(s);
+        Eigen::Vector2d Cddt = calculateSecondDerivativeAt(s);
+        double distanceDerivative      = 2 * (Ct - point).dot(Cdt);
+        double distanceSecondDerivative = 2 * (Cdt.dot(Cdt) + (Ct - point).dot(Cddt));
 
-    //     if (std::abs(distanceSecondDerivative) < 1e-8 || std::isnan(distanceSecondDerivative)) {
-    //         break; // Can't safely step
-    //     }
-    //     double sNext = s - distanceDerivative / distanceSecondDerivative;
+        if (std::abs(distanceSecondDerivative) < 1e-8 || std::isnan(distanceSecondDerivative)) {
+            break; // Can't safely step
+        }
+        double sNext = s - distanceDerivative / distanceSecondDerivative;
 
-    //     // Clamp t to curve parameter range
-    //     s = sEnd ? sNext > sEnd : sNext;
-    //     s = sStart ? sNext < sStart : sNext;
+        // Clamp t to curve parameter range
+        s = sEnd ? sNext > sEnd : sNext;
+        s = sStart ? sNext < sStart : sNext;
 
-    //     // Optional: fast exit if already close
-    //     if (std::abs(distanceDerivative) < epsilon) {
-    //         break;
-    //     }
-    // }
+        // Optional: fast exit if already close
+        if (std::abs(distanceDerivative) < epsilon) {
+            break;
+        }
+    }
 
     return bestS;
 }
