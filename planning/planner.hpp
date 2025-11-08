@@ -14,11 +14,11 @@ public:
     static constexpr double GOAL_BIAS = 0.4;
     static constexpr int RESOLUTION = 20;
     static constexpr double GOAL_RADIUS = 2;
-    static constexpr size_t RRT_ITERATIONS = 2000;
+    static constexpr size_t RRT_ITERATIONS = 6000;
     static constexpr double CONVERGENCE_FACTOR = 30;
 
     Planner(Pose2d startPose, Pose2d goalPose, RRT::BoundingBox bounds, std::vector<RRT::Obstacle>& obstacles) 
-        : rrt(startPose.pos, goalPose.pos, bounds, RESOLUTION, GOAL_BIAS, GOAL_RADIUS, RRT_ITERATIONS, obstacles)
+        : rrt(Vec2d::fromEigen(startPose.pos), Vec2d::fromEigen(goalPose.pos), bounds, RESOLUTION, GOAL_BIAS, GOAL_RADIUS, RRT_ITERATIONS, obstacles)
     {}
 
     void genGlobalPath();

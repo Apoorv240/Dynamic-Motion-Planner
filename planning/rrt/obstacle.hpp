@@ -35,6 +35,15 @@ namespace RRT {
             );
         }
 
+        static Obstacle fromRectBottomLeftExpanded(double blX, double blY, double width, double height, double expansion) {
+            return fromRectBottomLeft(
+                blX - expansion,
+                blY - expansion,
+                width + expansion*2,
+                height + expansion*2
+            );
+        }
+
         bool pointInObstacle(const Vec2d& p) const;
         bool lineInObstacle(const Vec2d& p1, const Vec2d& p2) const;
     };

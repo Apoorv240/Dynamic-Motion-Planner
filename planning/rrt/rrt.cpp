@@ -174,3 +174,8 @@ void Generator::iterateIterations(int iter) {
         iterate();
     }
 }
+
+int Generator::iterateIterationsAndUntilFound(int minIter, int maxIter) {
+    iterateIterations(minIter);
+    return iterateUntilPathFound(maxIter);
+}

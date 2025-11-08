@@ -37,6 +37,7 @@ namespace RRT {
         void iterate();
         int iterateUntilPathFound(int maxIter);
         void iterateIterations(int iter);
+        int iterateIterationsAndUntilFound(int minIter, int maxIter);
         Node* optimalNodeNearGoal() const;
         std::vector<Node*> getOptimalPath() const;
         std::vector<Obstacle> obstacles;

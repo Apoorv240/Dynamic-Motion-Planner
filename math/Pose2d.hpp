@@ -1,24 +1,27 @@
 #pragma once
 
-#include "Vec2d.hpp"
+#include "../third_party/eigen/Dense"
+#include "../third_party/eigen/QR"
+
+#include "angle.hpp"
 
 struct Pose2d {
-    Vec2d pos;
-    double heading;
-    Vec2d vel;
-    Vec2d acc;
+    Eigen::Vector2d pos;
+    Eigen::Vector2d heading;
+    Eigen::Vector2d vel;
+    Eigen::Vector2d acc;
 
-    Pose2d(double x, double y) 
-        : pos(x, y), vel(0, 0), acc(0, 0)
+    Pose2d(double x, double y, double heading) 
+        : pos(x, y), heading(angle_utils::vectorFromAngle(heading)), vel(0, 0), acc(0, 0)
     {}
 
-    Pose2d(Vec2d pos, Vec2d vel, Vec2d acc) 
-        : pos(pos), vel(vel), acc(acc)
+    Pose2d(Eigen::Vector2d pos, Eigen::Vector2d heading, Eigen::Vector2d vel, Eigen::Vector2d acc) 
+        : pos(pos), vel(vel), heading(heading), acc(acc)
     {}
 
     Pose2d() = default;
 
     Pose2d operator+(const Pose2d& other) const {
-        return Pose2d(pos + other.pos, vel + other.vel, acc + other.acc);
+        return Pose2d(pos + other.pos, heading + other.heading, vel + other.vel, acc + other.acc);
     }
 };

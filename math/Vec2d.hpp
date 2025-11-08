@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include "../third_party/eigen/Dense"
 
 class Vec2d {
 private:
@@ -73,5 +74,9 @@ public:
 
     Vec2d operator*(const double scalar) const {
         return Vec2d(x() * scalar, y() * scalar);
+    }
+
+    static Vec2d fromEigen(const Eigen::Vector2d& v) {
+        return Vec2d(v.x(), v.y());
     }
 };
