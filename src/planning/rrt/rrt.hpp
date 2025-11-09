@@ -5,25 +5,24 @@
 #include <vector>
 #include <random>
 
-#include "planning/rrt/obstacle.hpp"
 #include "planning/rrt/node.hpp"
 #include "planning/rrt/nodeManager.hpp"
 #include "planning/rrt/random.hpp"
 
-#include "math/Vec2d.hpp"
+#include <Eigen/Dense>
+#include "planning/field/field.hpp"
 
-namespace RRT {
+namespace rrt {
     class Generator {
     public:
-        Generator(Vec2d start, Vec2d goal, BoundingBox bounds, double stepSize, double goalBias, double goalRadius, int iterations, const std::vector<Obstacle>& obstacles)
+        Generator(Eigen::Vector2d start, Eigen::Vector2d goal, field::Field field, double stepSize, double goalBias, double goalRadius, int iterations)
             :   start(start), 
                 goal(goal), 
+                field(field),
                 stepSize(stepSize), 
-                bounds(bounds), 
                 goalBias(goalBias), 
                 goalRadius(goalRadius), 
                 rand(), 
-                obstacles(obstacles),
                 root(std::make_unique<Node>(nullptr, start)),
                 foundPath(false),
                 bestPathCost(std::numeric_limits<double>::infinity()),
@@ -40,13 +39,12 @@ namespace RRT {
         int iterateIterationsAndUntilFound(int minIter, int maxIter);
         Node* optimalNodeNearGoal() const;
         std::vector<Node*> getOptimalPath() const;
-        std::vector<Obstacle> obstacles;
+        field::Field field;
         NodeManager nodeManager;
 
     private:
-        Vec2d start;
-        Vec2d goal;
-        BoundingBox bounds;
+        Eigen::Vector2d start;
+        Eigen::Vector2d goal;
         std::unique_ptr<Node> root;
 
         mutable Random rand;
@@ -59,11 +57,11 @@ namespace RRT {
         double bestPathCost;
         double bestPathDistance;
 
-        Node* findBestParent(const std::vector<Node*>& nodeList, const Vec2d& point, Node* nearestNode) const;
-        void nodesInRadiusofPoint(std::vector<Node*>& nodeList, double radius, const Vec2d& point) const;
-        Vec2d genRandPoint() const;
-        bool pointIsValid(const Vec2d& p) const;
-        bool lineIsValid(const Vec2d& p1, const Vec2d& p2) const;
-        Node* nearestNode(const Vec2d& point) const;
+        Node* findBestParent(const std::vector<Node*>& nodeList, const Eigen::Vector2d& point, Node* nearestNode) const;
+        void nodesInRadiusofPoint(std::vector<Node*>& nodeList, double radius, const Eigen::Vector2d& point) const;
+        Eigen::Vector2d genRandPoint() const;
+        bool pointIsValid(const Eigen::Vector2d& p) const;
+        bool lineIsValid(const Eigen::Vector2d& p1, const Eigen::Vector2d& p2) const;
+        Node* nearestNode(const Eigen::Vector2d& point) const;
     };
 };

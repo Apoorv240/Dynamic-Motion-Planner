@@ -3,7 +3,7 @@
 #include "planning/rrt/node.hpp"
 #include <nanoflann/nanoflann.hpp>
 
-namespace RRT {
+namespace rrt {
     struct NodeCloud {
         std::vector<Node*>& nodes;
 
@@ -51,7 +51,7 @@ namespace RRT {
             size++;
         }
 
-        Node* nearestNeighbor(const Vec2d& point) const {
+        Node* nearestNeighbor(const Eigen::Vector2d& point) const {
             size_t retIndex;
             double retDistanceSquared;
             double query_point[2] = {point.x(), point.y()};
@@ -63,7 +63,7 @@ namespace RRT {
             return nodes[retIndex];
         }
 
-        void radiusSearch(std::vector<Node*>& nodeList, double radius, const Vec2d& point) const {
+        void radiusSearch(std::vector<Node*>& nodeList, double radius, const Eigen::Vector2d& point) const {
             const double radiusSqr = radius * radius;
             std::vector<nanoflann::ResultItem<size_t, double>> retIndicesDists;
             double query_point[2] = {point.x(), point.y()};

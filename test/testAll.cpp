@@ -11,6 +11,7 @@
 #include "planning/gvf/gvf.hpp"
 #include "planning/planner.hpp"
 #include "simulation/robot.hpp"
+#include "planning/field/field.hpp"
 #include "math/angle.hpp"
 
 inline std::vector<Eigen::Vector2d> makeSquareVertices(double L) {
@@ -53,23 +54,24 @@ int main() {
     Pose2d startPose = Pose2d(-150, 150, angle_utils::deg2rad(90));
     Pose2d endPose = Pose2d(150, -150, angle_utils::deg2rad(-90));
 
-    std::vector<RRT::Obstacle> obstacles {
-        RRT::Obstacle::fromRectBottomLeftExpanded(44*2.54, -30*2.54, 10*2.54, 50*2.54, 9 * 2.54),
-        RRT::Obstacle::fromRectBottomLeftExpanded(-15 * 2.54, -15 * 2.54, 30 * 2.54, 30 * 2.54, 9 * 2.54),
-        RRT::Obstacle::fromRectBottomLeftExpanded(-51 * 2.54, -27 * 2.54, 10 * 2.54, 50 * 2.54, 9 * 2.54),
-        RRT::Obstacle::fromRectBottomLeft(44*2.54, -30*2.54, 10*2.54, 50*2.54),
-        RRT::Obstacle::fromRectBottomLeft(-15 * 2.54, -15 * 2.54, 30 * 2.54, 30 * 2.54),
-        RRT::Obstacle::fromRectBottomLeft(-51 * 2.54, -27 * 2.54, 10 * 2.54, 50 * 2.54),
+    std::vector<field::Obstacle> obstacles {
+        field::Obstacle::fromRectBottomLeftExpanded(44*2.54, -30*2.54, 10*2.54, 50*2.54, 9 * 2.54),
+        field::Obstacle::fromRectBottomLeftExpanded(-15 * 2.54, -15 * 2.54, 30 * 2.54, 30 * 2.54, 9 * 2.54),
+        field::Obstacle::fromRectBottomLeftExpanded(-51 * 2.54, -27 * 2.54, 10 * 2.54, 50 * 2.54, 9 * 2.54),
+        field::Obstacle::fromRectBottomLeft(44*2.54, -30*2.54, 10*2.54, 50*2.54),
+        field::Obstacle::fromRectBottomLeft(-15 * 2.54, -15 * 2.54, 30 * 2.54, 30 * 2.54),
+        field::Obstacle::fromRectBottomLeft(-51 * 2.54, -27 * 2.54, 10 * 2.54, 50 * 2.54),
     };
 
-    Planner planner(startPose, endPose, RRT::BoundingBox(-182.88, -182.88, 182.88, 182.88), obstacles);
+    field::Field field(Eigen::Vector2d(-182.88, -182.88), Eigen::Vector2d(182.88, 182.88), obstacles);
+
+    Planner planner(startPose, endPose, field);
     planner.genGlobalPath();
 
     auto endTime = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double, std::milli> duration = endTime - startTime;
     std::cout << "Generated for " << duration.count() << " milliseconds" << std::endl;
-
 
     Robot simRobot(startPose);
     auto robotSquare = makeSquareVertices(18*2.54);
@@ -113,10 +115,11 @@ int main() {
         }
         fprintf(gp, "e\n");
 
-        auto direction = planner.getDirectionVectorAt(
-            Eigen::Vector2d(simRobot.pose.pos.x(), simRobot.pose.pos.y()));
-
-        auto displayDirection = Eigen::Vector2d(simRobot.pose.pos.x(), simRobot.pose.pos.y()) + direction*10;
+        Eigen::Vector2d direction = planner.getDirectionVectorAt(
+            Eigen::Vector2d(simRobot.pose.pos.x(), simRobot.pose.pos.y())
+        );
+        Eigen::Vector2d pose(simRobot.pose.pos.x(), simRobot.pose.pos.y());
+        auto displayDirection = pose + direction*10;
 
         // Display robot square
         auto rotatedRobotSquare = rotateAndTranslateSquare(robotSquare, angle_utils::angle(simRobot.pose.vel), simRobot.pose.pos);

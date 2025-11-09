@@ -1,28 +1,28 @@
 #include "planning/rrt/rrt.hpp"
 #include <algorithm>
 
-using namespace RRT;
+using namespace rrt;
 
-Vec2d Generator::genRandPoint() const {
+Eigen::Vector2d Generator::genRandPoint() const {
     if (!foundPath)
-        return sampleInBoundsWithBias(bounds, goal, goalBias, rand);
-    return sampleInInformedEllipse(start, goal, bestPathDistance, bounds, goalBias, rand);
+        return sampleInBoundsWithBias(field, goal, goalBias, rand);
+    return sampleInInformedEllipse(start, goal, bestPathDistance, field, goalBias, rand);
 }
 
-Node* Generator::nearestNode(const Vec2d& point) const {
+Node* Generator::nearestNode(const Eigen::Vector2d& point) const {
     return nodeManager.nearestNeighbor(point);
 }
 
-void Generator::nodesInRadiusofPoint(std::vector<Node*>& nodeList, double radius, const Vec2d& point) const {
+void Generator::nodesInRadiusofPoint(std::vector<Node*>& nodeList, double radius, const Eigen::Vector2d& point) const {
     nodeManager.radiusSearch(nodeList, radius, point);
 }
 
-Node* Generator::findBestParent(const std::vector<Node*>& nodeList, const Vec2d& point, Node* nearestNode) const {
+Node* Generator::findBestParent(const std::vector<Node*>& nodeList, const Eigen::Vector2d& point, Node* nearestNode) const {
     Node* bestParent = nearestNode;
-    double bestCost = bestParent->cost + (point - bestParent->point).magnitude();
+    double bestCost = bestParent->cost + (point - bestParent->point).norm();
 
     for (const auto& node : nodeList) {
-        double cost = node->cost + (point - node->point).magnitude();
+        double cost = node->cost + (point - node->point).norm();
         if (cost < bestCost) {
             bestParent = node;
             bestCost = cost;
@@ -32,8 +32,8 @@ Node* Generator::findBestParent(const std::vector<Node*>& nodeList, const Vec2d&
     return bestParent;
 }
 
-bool Generator::pointIsValid(const Vec2d& p) const {
-    for (const auto& obstacle : obstacles) {
+bool Generator::pointIsValid(const Eigen::Vector2d& p) const {
+    for (const auto& obstacle : field.staticObstacles) {
         if (obstacle.pointInObstacle(p)) {
             return false;
         }
@@ -41,8 +41,8 @@ bool Generator::pointIsValid(const Vec2d& p) const {
     return true;
 }
 
-bool Generator::lineIsValid(const Vec2d& p1, const Vec2d& p2) const {
-    for (const auto& obstacle : obstacles) {
+bool Generator::lineIsValid(const Eigen::Vector2d& p1, const Eigen::Vector2d& p2) const {
+    for (const auto& obstacle : field.staticObstacles) {
         if (obstacle.lineInObstacle(p1, p2)) {
             return false;
         }
@@ -51,7 +51,7 @@ bool Generator::lineIsValid(const Vec2d& p1, const Vec2d& p2) const {
 }
 
 void Generator::iterate() {
-    Vec2d randPoint = genRandPoint();
+    Eigen::Vector2d randPoint = genRandPoint();
 
     // Nearest Node to Point
     Node* nearestNode = this->nearestNode(randPoint);
@@ -60,7 +60,8 @@ void Generator::iterate() {
     if (randPoint == nearestNode->point) {
         return;
     }
-    randPoint = randPoint.steerToward(nearestNode->point, stepSize);
+    
+    randPoint = randPoint + (nearestNode->point - randPoint).normalized() * stepSize;
 
     // Check Collision
     if (!pointIsValid(randPoint)) {
@@ -93,7 +94,7 @@ void Generator::iterate() {
     for (auto &node : nearbyNodes) {
         if (node->point == newNode->point) continue;
         
-        if (node->cost > newNode->cost + (newNode->point - node->point).magnitude() && lineIsValid(node->point, newNode->point)) {
+        if (node->cost > newNode->cost + (newNode->point - node->point).norm() && lineIsValid(node->point, newNode->point)) {
             if (node->parent) {
                 auto nodePtr = std::find_if(node->parent->children.begin(), node->parent->children.end(),
                     [node](const std::unique_ptr<Node>& ptr) {
@@ -110,7 +111,7 @@ void Generator::iterate() {
         }
     }
 
-    if ((goal - newNode->point).magnitude() < stepSize) {
+    if ((goal - newNode->point).norm() < stepSize) {
         std::unique_ptr<Node> newGoalNodePtr = std::make_unique<Node>(newNode, goal);
         Node* newGoalNode = newGoalNodePtr.get();
         newNode->children.emplace_back(std::move(newGoalNodePtr));
@@ -138,7 +139,7 @@ Node* Generator::optimalNodeNearGoal() const {
     Node* bestCandidate = goalCandidates[0];
 
     for (auto& node : goalCandidates) {
-        if (node->cost + (goal - node->point).magnitude() < bestCandidate->cost) {
+        if (node->cost + (goal - node->point).norm() < bestCandidate->cost) {
             bestCandidate = node;
         }
     }

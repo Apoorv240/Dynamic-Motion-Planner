@@ -20,14 +20,14 @@ namespace spline {
 
         int degree;
     public:
-        void generate(const std::vector<RRT::Node*>& nodes, const int degree, const double smoothingFactor) {
+        void generate(const std::vector<rrt::Node*>& nodes, const int degree, const double smoothingFactor) {
             this->degree = degree;
 
             std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d>> points;
             points.resize(nodes.size());
 
             for (size_t i = 0; i < nodes.size(); i++) {
-                points[i] = Eigen::Vector2d(nodes[i]->point.x(), nodes[i]->point.y());
+                points[i] = nodes[i]->point;
             }
 
             spline.generateAll(points, degree, smoothingFactor);

@@ -3,18 +3,18 @@
 #include <vector>
 #include <memory>
 
-#include "math/Vec2d.hpp"
+#include <Eigen/Dense>
 
-namespace RRT {
+namespace rrt {
     struct Node {
         Node* parent;
         std::vector<std::unique_ptr<Node>> children;
-        Vec2d point;
+        Eigen::Vector2d point;
         double cost;
         double cumulativeDistance;
         double angleWeight;
 
-        Node(Node* parent, Vec2d point, double angleWeight=1)
+        Node(Node* parent, Eigen::Vector2d point, double angleWeight=0)
             : parent(parent), children(), point(point), cost(0), angleWeight(angleWeight), cumulativeDistance(0)
         {}
 

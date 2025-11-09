@@ -2,20 +2,10 @@
 
 #include <random>
 #include <cmath>
-#include "math/Vec2d.hpp"
+#include <Eigen/Dense>
+#include "planning/field/field.hpp"
 
-namespace RRT {
-    struct BoundingBox {
-        double minX;
-        double minY;
-        double maxX;
-        double maxY;
-
-        BoundingBox(double minX, double minY, double maxX, double maxY)
-            : minX(minX), minY(minY), maxX(maxX), maxY(maxY)
-        {}
-    };
-
+namespace rrt {
     constexpr double PI = 3.14159265358979323846;
 
     struct Random {
@@ -29,7 +19,7 @@ namespace RRT {
         double randAngle() { return unifAngle(gen); }
     };
 
-    Vec2d sampleInBoundsWithBias(BoundingBox boundingBox, const Vec2d& goal, double goalBias, Random& rng);
+    Eigen::Vector2d sampleInBoundsWithBias(const field::Field& field, const Eigen::Vector2d& goal, double goalBias, Random& rng);
 
-    Vec2d sampleInInformedEllipse(const Vec2d& start, const Vec2d& goal, double cBest, BoundingBox boundingBox, double goalBias, Random& rng);
+    Eigen::Vector2d sampleInInformedEllipse(const Eigen::Vector2d& start, const Eigen::Vector2d& goal, double cBest, const field::Field& field, double goalBias, Random& rng);
 }
